@@ -3,66 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPRODUCTOR KIKEMUSIC</title>
+    <title>REPRODUCTOR KIKEFLIXTV</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; display: flex; justify-content: center; align-items: center; }
-        iframe { width: 100%; height: 100%; border: none; }
-        #mensaje-ia { 
-            color: white; 
-            text-align: center; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            display: none; 
-            padding: 20px;
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; display: flex; justify-content: center; align-items: center; font-family: sans-serif; }
+        video { width: 100%; height: 100vh; object-fit: contain; }
+        
+        /* Botón para activar sonido si el navegador lo bloquea */
+        #unmute-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 204, 0, 0.8);
+            color: black;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
         }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="player-container" style="width: 100%; height: 100vh;">
-        <iframe id="videoFrame" scrolling="no" allowfullscreen="true" allow="autoplay; fullscreen"></iframe>
-    </div>
-
-    <div id="mensaje-ia">
-        <div class="loader"></div>
-        <h1 style="font-size: 24px; color: #ffcc00;">CAPÍTULO EN PROCESO</h1>
-        <p style="font-size: 18px;">KIKEMUSIC Informa: Este contenido se está cargando.</p>
-        <p style="color: #888;">Vuelve en unos minutos.</p>
-    </div>
+    <div id="unmute-button" onclick="toggleSound()">🔊 ACTIVAR SONIDO</div>
+    
+    <video id="mainPlayer" playsinline></video>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoUrl = urlParams.get('video');
-        const iframe = document.getElementById('videoFrame');
-        const pantallaIA = document.getElementById('mensaje-ia');
+        const player = document.getElementById('mainPlayer');
+        const unmuteBtn = document.getElementById('unmute-button');
 
-        if (videoUrl === 'proximamente') {
-            // OPCIÓN 1: VOZ AUTOMÁTICA (Sin video)
-            iframe.style.display = 'none';
-            pantallaIA.style.display = 'block';
-
-            const texto = "Este capítulo no se encuentra disponible todavía. Estamos trabajando en ello para brindarte la mejor calidad. Por favor, vuelve más tarde.";
-            const utterance = new SpeechSynthesisUtterance(texto);
-            utterance.lang = 'es-ES';
-            utterance.rate = 0.9;
-            window.speechSynthesis.speak(utterance);
-
-        } else if (videoUrl) {
-            // OPCIÓN 2: VIDEO DE LA IA O PELÍCULA REAL
-            // Si le pasas el link del video que hiciste en InVideo, cargará aquí.
-            iframe.src = videoUrl;
-        } else {
-            document.getElementById('player-container').innerHTML = '<p style="color: white; font-family: Arial;">ESPERANDO ENLACE DE VIDEO...</p>';
+        if (videoUrl) {
+            player.src = videoUrl;
+            
+            // Intentamos reproducir con sonido directamente
+            player.muted = false; 
+            player.play().catch(error => {
+                console.log("El navegador bloqueó el sonido inicial. Intentando modo silencio...");
+                // Si falla, activamos silencio para que al menos el video corra
+                player.muted = true;
+                player.play();
+                // Mostramos el botón para que el usuario active el audio
+                unmuteBtn.style.display = 'block';
+            });
         }
+
+        function toggleSound() {
+            player.muted = false;
+            unmuteBtn.style.display = 'none';
+        }
+
+        // Si el video termina, que vuelva a empezar (opcional)
+        player.onended = function() {
+            player.play();
+        };
     </script>
 </body>
 </html>
