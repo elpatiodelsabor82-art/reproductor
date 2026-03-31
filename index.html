@@ -3,19 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; }
-        iframe { width: 100%; height: 100%; border: none; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        iframe { width: 100%; height: 100%; border: none; display: none; }
+        #overlay { 
+            position: absolute; width: 100%; height: 100%; 
+            display: flex; justify-content: center; align-items: center; 
+            background: #000; z-index: 2000; 
+        }
+        #btn-entrar { 
+            padding: 20px 40px; font-size: 20px; cursor: pointer; 
+            background: #e50914; color: white; border: none; border-radius: 5px;
+            font-weight: bold; text-transform: uppercase;
+        }
         #timer { 
             position: absolute; top: 20px; right: 20px; 
             background: rgba(0,0,0,0.8); color: white; 
-            padding: 10px; border-radius: 5px; z-index: 10;
-            font-family: sans-serif;
+            padding: 10px; border-radius: 5px; z-index: 10; display: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="timer" style="display: none;">Publicidad: <span id="seg">7</span>s</div>
+    <div id="overlay">
+        <button id="btn-entrar">VER ESTRENO</button>
+    </div>
+
+    <div id="timer">Publicidad: <span id="seg">7</span>s</div>
 
     <iframe id="videoFrame" 
             allow="autoplay; fullscreen; picture-in-picture" 
@@ -26,15 +39,20 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoUrl = urlParams.get('video');
-        const adUrl = urlParams.get('ad'); // Aquí lee la publicidad que tú le mandes en el link
+        const adUrl = urlParams.get('ad') || "En espera de capitulo.mp4";
         
         const iframe = document.getElementById('videoFrame');
         const timerDiv = document.getElementById('timer');
         const segSpan = document.getElementById('seg');
+        const overlay = document.getElementById('overlay');
+        const btn = document.getElementById('btn-entrar');
 
-        if (videoUrl) {
-            // Si mandas publicidad en el link (?ad=...), la carga. Si no, va directo al video.
-            if (adUrl) {
+        btn.onclick = () => {
+            overlay.style.display = 'none'; // Quitamos el botón
+            iframe.style.display = 'block'; // Mostramos el iframe
+            
+            if (videoUrl) {
+                // 1. CARGA PUBLICIDAD CON AUDIO (Ya permitido por el clic)
                 iframe.src = adUrl;
                 timerDiv.style.display = 'block';
                 
@@ -46,16 +64,12 @@
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
                         timerDiv.style.display = 'none';
-                        iframe.src = videoUrl; // Salto al video principal
+                        // 2. SALTO AL VIDEO PRINCIPAL (DRIVE/MYVIDPLAY)
+                        iframe.src = videoUrl;
                     }
                 }, 1000);
-            } else {
-                // Si no hay parámetro "ad", carga tu video directo como siempre
-                iframe.src = videoUrl;
             }
-        } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
-        }
+        };
     </script>
 </body>
 </html>
