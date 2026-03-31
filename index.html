@@ -3,11 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
         iframe { width: 100%; height: 100%; border: none; }
+        #ad-timer { 
+            position: absolute; 
+            top: 20px; 
+            right: 20px; 
+            background: rgba(0,0,0,0.8); 
+            color: white; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            z-index: 999;
+            pointer-events: none; /* No estorba al hacer clic */
+        }
     </style>
 </head>
 <body>
+
+    <div id="ad-timer" style="display: none;">Publicidad: <span id="seconds">5</span>s</div>
 
     <iframe id="videoFrame" 
             allow="autoplay; fullscreen; picture-in-picture" 
@@ -17,16 +30,38 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        let videoUrl = urlParams.get('video');
+        const videoUrl = urlParams.get('video');
+        const adUrl = urlParams.get('ad'); // Nuevo parámetro para el anuncio
         
         const iframe = document.getElementById('videoFrame');
+        const adTimer = document.getElementById('ad-timer');
+        const secondsSpan = document.getElementById('seconds');
 
         if (videoUrl) {
-            // Si el link ya es un embed, lo cargamos directamente
-            // Si no, le damos un pequeño empujón de referrer
-            iframe.src = videoUrl;
+            if (adUrl) {
+                // --- LÓGICA DE PUBLICIDAD ---
+                iframe.src = adUrl; // Cargamos el anuncio primero
+                adTimer.style.display = 'block';
+                
+                let timeLeft = 5; // Duración del anuncio en segundos
+                
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    secondsSpan.innerText = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        adTimer.style.display = 'none';
+                        iframe.src = videoUrl; // Cambiamos al video principal
+                    }
+                }, 1000);
+
+            } else {
+                // Si no hay parámetro "ad", cargar video directo
+                iframe.src = videoUrl;
+            }
         } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center">Enlace no encontrado</p>';
+            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
         }
     </script>
 </body>
