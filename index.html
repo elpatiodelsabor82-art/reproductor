@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; }
         iframe { width: 100%; height: 100%; border: none; }
         #timer { 
             position: absolute; top: 20px; right: 20px; 
             background: rgba(0,0,0,0.8); color: white; 
             padding: 10px; border-radius: 5px; z-index: 10;
+            font-family: sans-serif;
         }
     </style>
 </head>
@@ -25,32 +26,35 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoUrl = urlParams.get('video');
-        // Usamos el nombre del archivo directamente como me pediste
-        const adUrl = "En espera de capitulo.mp4"; 
+        const adUrl = urlParams.get('ad'); // Aquí lee la publicidad que tú le mandes en el link
         
         const iframe = document.getElementById('videoFrame');
         const timerDiv = document.getElementById('timer');
         const segSpan = document.getElementById('seg');
 
         if (videoUrl) {
-            // 1. Cargamos la publicidad en el mismo iframe
-            iframe.src = adUrl;
-            timerDiv.style.display = 'block';
-            
-            let timeLeft = 7;
-            const countdown = setInterval(() => {
-                timeLeft--;
-                segSpan.innerText = timeLeft;
+            // Si mandas publicidad en el link (?ad=...), la carga. Si no, va directo al video.
+            if (adUrl) {
+                iframe.src = adUrl;
+                timerDiv.style.display = 'block';
                 
-                if (timeLeft <= 0) {
-                    clearInterval(countdown);
-                    timerDiv.style.display = 'none';
-                    // 2. Cambiamos el contenido del mismo iframe al video principal
-                    iframe.src = videoUrl;
-                }
-            }, 1000);
+                let timeLeft = 7;
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    segSpan.innerText = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        timerDiv.style.display = 'none';
+                        iframe.src = videoUrl; // Salto al video principal
+                    }
+                }, 1000);
+            } else {
+                // Si no hay parámetro "ad", carga tu video directo como siempre
+                iframe.src = videoUrl;
+            }
         } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center">Enlace no encontrado</p>';
+            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
         }
     </script>
 </body>
