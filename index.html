@@ -18,7 +18,7 @@
 
     <div id="timer-box" class="hidden">Publicidad: <span id="count">7</span>s</div>
     
-    <video id="adVideo" class="hidden" autoplay playsinline></video>
+    <video id="adVideo" class="hidden" autoplay muted playsinline></video>
 
     <iframe id="videoFrame" class="hidden" 
             allow="autoplay; fullscreen; picture-in-picture" 
@@ -36,27 +36,27 @@
         const timerBox = document.getElementById('timer-box');
         const countSpan = document.getElementById('count');
 
-        // Si no mandas "ad" en el link, pero quieres que SIEMPRE salga el de "En espera"
-        if (!adUrl && window.location.href.includes('?video=')) {
-            adUrl = "En espera de capitulo.mp4"; 
-        }
-
         if (videoUrl) {
-            if (adUrl) {
-                // 1. Cargar y mostrar el video de publicidad MP4
-                adVideo.src = adUrl;
+            // Si el link de anuncio tiene espacios, el navegador los necesita codificados
+            const adSource = adUrl ? encodeURI(adUrl) : "En%20espera%20de%20capitulo.mp4";
+
+            if (adSource) {
+                adVideo.src = adSource;
                 adVideo.classList.remove('hidden');
                 timerBox.classList.remove('hidden');
-                adVideo.play().catch(e => console.log("Esperando interacción para play"));
 
-                let timeLeft = 7; // Segundos de duración del anuncio
+                // Forzar reproducción
+                adVideo.play().catch(() => {
+                    console.log("El navegador bloqueó el autoplay, esperando clic.");
+                });
+
+                let timeLeft = 7; 
                 const countdown = setInterval(() => {
                     timeLeft--;
                     countSpan.innerText = timeLeft;
                     
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
-                        // 2. Limpiar anuncio y cargar el video principal CON TU SEGURIDAD
                         adVideo.pause();
                         adVideo.classList.add('hidden');
                         timerBox.classList.add('hidden');
@@ -66,12 +66,9 @@
                     }
                 }, 1000);
             } else {
-                // Sin anuncio: directo al video protegido
                 videoFrame.src = videoUrl;
                 videoFrame.classList.remove('hidden');
             }
-        } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Esperando contenido...</p>';
         }
     </script>
 </body>
