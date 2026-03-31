@@ -2,66 +2,74 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor KikeFlix</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        iframe { width: 100%; height: 100%; border: none; }
-        #ad-timer { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            background: rgba(0,0,0,0.8); 
-            color: white; 
-            padding: 10px 15px; 
-            border-radius: 5px; 
-            z-index: 999;
-            pointer-events: none; /* No estorba al hacer clic */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        iframe, video { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
+        #ad-overlay { 
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(0,0,0,0.85); color: #fff; 
+            padding: 12px 20px; border-radius: 4px; z-index: 1000;
+            border: 1px solid #444; font-size: 14px;
         }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="ad-timer" style="display: none;">Publicidad: <span id="seconds">5</span>s</div>
-
-    <iframe id="videoFrame" 
-            allow="autoplay; fullscreen; picture-in-picture" 
-            allowfullscreen 
-            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation">
-    </iframe>
+    <div id="ad-overlay" class="hidden">Publicidad: <span id="timer">5</span>s</div>
+    
+    <video id="nativeVideo" class="hidden" autoplay playsinline></video>
+    
+    <iframe id="videoFrame" class="hidden" allow="autoplay; fullscreen" allowfullscreen></iframe>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const videoUrl = urlParams.get('video');
-        const adUrl = urlParams.get('ad'); // Nuevo parámetro para el anuncio
+        const params = new URLSearchParams(window.location.search);
+        const adUrl = params.get('ad');
+        const mainUrl = params.get('video');
         
-        const iframe = document.getElementById('videoFrame');
-        const adTimer = document.getElementById('ad-timer');
-        const secondsSpan = document.getElementById('seconds');
+        const videoFrame = document.getElementById('videoFrame');
+        const nativeVideo = document.getElementById('nativeVideo');
+        const adOverlay = document.getElementById('ad-overlay');
+        const timerSpan = document.getElementById('timer');
 
-        if (videoUrl) {
+        function cargarContenido(url) {
+            // Si es un link de Drive o embed, usamos IFRAME
+            if (url.includes('drive.google.com') || url.includes('myvidplay')) {
+                videoFrame.src = url;
+                videoFrame.classList.remove('hidden');
+                nativeVideo.classList.add('hidden');
+            } else {
+                // Si es un archivo directo (MP4), usamos el tag VIDEO para mejor control
+                nativeVideo.src = url;
+                nativeVideo.classList.remove('hidden');
+                videoFrame.classList.add('hidden');
+                nativeVideo.play();
+            }
+        }
+
+        if (mainUrl) {
             if (adUrl) {
-                // --- LÓGICA DE PUBLICIDAD ---
-                iframe.src = adUrl; // Cargamos el anuncio primero
-                adTimer.style.display = 'block';
-                
-                let timeLeft = 5; // Duración del anuncio en segundos
-                
+                // Mostrar publicidad primero
+                adOverlay.classList.remove('hidden');
+                cargarContenido(adUrl);
+
+                let timeLeft = 7; // Duración sugerida para el anuncio
                 const countdown = setInterval(() => {
                     timeLeft--;
-                    secondsSpan.innerText = timeLeft;
-                    
+                    timerSpan.innerText = timeLeft;
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
-                        adTimer.style.display = 'none';
-                        iframe.src = videoUrl; // Cambiamos al video principal
+                        adOverlay.classList.add('hidden');
+                        cargarContenido(mainUrl);
                     }
                 }, 1000);
-
             } else {
-                // Si no hay parámetro "ad", cargar video directo
-                iframe.src = videoUrl;
+                cargarContenido(mainUrl);
             }
         } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
+            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20vh;">Esperando contenido...</p>';
         }
     </script>
 </body>
