@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor KikeFlix</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
         iframe, video { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
         #ad-overlay { 
             position: absolute; top: 20px; right: 20px; 
@@ -22,7 +21,11 @@
     
     <video id="nativeVideo" class="hidden" autoplay playsinline></video>
     
-    <iframe id="videoFrame" class="hidden" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    <iframe id="videoFrame" class="hidden" 
+            allow="autoplay; fullscreen; picture-in-picture" 
+            allowfullscreen 
+            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation">
+    </iframe>
 
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -34,14 +37,14 @@
         const adOverlay = document.getElementById('ad-overlay');
         const timerSpan = document.getElementById('timer');
 
-        function cargarContenido(url) {
-            // Si es un link de Drive o embed, usamos IFRAME
-            if (url.includes('drive.google.com') || url.includes('myvidplay')) {
+        function cargarContenido(url, esAnuncio = false) {
+            // Si es el video principal (MyVidPlay/Drive), activamos el iframe con TUS BLOQUEOS
+            if (!esAnuncio && (url.includes('drive.google.com') || url.includes('myvidplay') || url.includes('e/'))) {
                 videoFrame.src = url;
                 videoFrame.classList.remove('hidden');
                 nativeVideo.classList.add('hidden');
             } else {
-                // Si es un archivo directo (MP4), usamos el tag VIDEO para mejor control
+                // Para el anuncio MP4 usamos el reproductor limpio
                 nativeVideo.src = url;
                 nativeVideo.classList.remove('hidden');
                 videoFrame.classList.add('hidden');
@@ -51,25 +54,25 @@
 
         if (mainUrl) {
             if (adUrl) {
-                // Mostrar publicidad primero
                 adOverlay.classList.remove('hidden');
-                cargarContenido(adUrl);
+                cargarContenido(adUrl, true);
 
-                let timeLeft = 7; // Duración sugerida para el anuncio
+                let timeLeft = 7; 
                 const countdown = setInterval(() => {
                     timeLeft--;
                     timerSpan.innerText = timeLeft;
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
                         adOverlay.classList.add('hidden');
-                        cargarContenido(mainUrl);
+                        // Aquí carga el video principal con el sandbox que protege tu sitio
+                        cargarContenido(mainUrl, false);
                     }
                 }, 1000);
             } else {
-                cargarContenido(mainUrl);
+                cargarContenido(mainUrl, false);
             }
         } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20vh;">Esperando contenido...</p>';
+            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
         }
     </script>
 </body>
