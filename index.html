@@ -28,7 +28,7 @@
         <button id="btn-entrar">VER ESTRENO</button>
     </div>
 
-    <div id="timer">Publicidad: <span id="seg">9</span>s</div>
+    <div id="timer">Publicidad: <span id="seg">7</span>s</div>
 
     <iframe id="videoFrame" 
             allow="autoplay; fullscreen; picture-in-picture" 
@@ -39,7 +39,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const videoUrl = urlParams.get('video');
-        const adUrl = urlParams.get('ad') || "";
+        const adUrl = urlParams.get('ad'); // YA NO TIENE EL "||", AHORA ESTÁ LIMPIO
         
         const iframe = document.getElementById('videoFrame');
         const timerDiv = document.getElementById('timer');
@@ -48,26 +48,31 @@
         const btn = document.getElementById('btn-entrar');
 
         btn.onclick = () => {
-            overlay.style.display = 'none'; // Quitamos el botón
-            iframe.style.display = 'block'; // Mostramos el iframe
+            overlay.style.display = 'none'; 
+            iframe.style.display = 'block'; 
             
             if (videoUrl) {
-                // 1. CARGA PUBLICIDAD CON AUDIO (Ya permitido por el clic)
-                iframe.src = adUrl;
-                timerDiv.style.display = 'block';
-                
-                let timeLeft = 7;
-                const countdown = setInterval(() => {
-                    timeLeft--;
-                    segSpan.innerText = timeLeft;
+                // SI MANDASTE PUBLICIDAD EN EL LINK
+                if (adUrl) {
+                    iframe.src = adUrl;
+                    timerDiv.style.display = 'block';
                     
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        timerDiv.style.display = 'none';
-                        // 2. SALTO AL VIDEO PRINCIPAL (DRIVE/MYVIDPLAY)
-                        iframe.src = videoUrl;
-                    }
-                }, 1000);
+                    let timeLeft = 7;
+                    const countdown = setInterval(() => {
+                        timeLeft--;
+                        segSpan.innerText = timeLeft;
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(countdown);
+                            timerDiv.style.display = 'none';
+                            iframe.src = videoUrl; // Salto a la película
+                        }
+                    }, 1000);
+                } 
+                // SI NO MANDASTE PUBLICIDAD (VA DIRECTO)
+                else {
+                    iframe.src = videoUrl;
+                }
             }
         };
     </script>
