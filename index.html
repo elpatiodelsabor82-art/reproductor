@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        iframe { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
+        iframe, video { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
         #timer-box { 
             position: absolute; top: 20px; right: 20px; 
-            background: rgba(0,0,0,0.7); color: #fff; 
-            padding: 8px 15px; border-radius: 5px; z-index: 100;
-            border: 1px solid #555; pointer-events: none;
+            background: rgba(0,0,0,0.8); color: #fff; 
+            padding: 10px 20px; border-radius: 5px; z-index: 1000;
+            border: 1px solid #444; font-weight: bold;
         }
         .hidden { display: none !important; }
     </style>
@@ -18,7 +18,7 @@
 
     <div id="timer-box" class="hidden">Publicidad: <span id="count">7</span>s</div>
     
-    <iframe id="adFrame" class="hidden" allow="autoplay; fullscreen"></iframe>
+    <video id="adVideo" class="hidden" autoplay playsinline></video>
 
     <iframe id="videoFrame" class="hidden" 
             allow="autoplay; fullscreen; picture-in-picture" 
@@ -28,31 +28,37 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const adUrl = urlParams.get('ad');
+        let adUrl = urlParams.get('ad');
         const videoUrl = urlParams.get('video');
         
-        const adFrame = document.getElementById('adFrame');
+        const adVideo = document.getElementById('adVideo');
         const videoFrame = document.getElementById('videoFrame');
         const timerBox = document.getElementById('timer-box');
         const countSpan = document.getElementById('count');
 
+        // Si no mandas "ad" en el link, pero quieres que SIEMPRE salga el de "En espera"
+        if (!adUrl && window.location.href.includes('?video=')) {
+            adUrl = "En espera de capitulo.mp4"; 
+        }
+
         if (videoUrl) {
             if (adUrl) {
-                // 1. Mostrar y cargar el video de publicidad
-                adFrame.src = adUrl;
-                adFrame.classList.remove('hidden');
+                // 1. Cargar y mostrar el video de publicidad MP4
+                adVideo.src = adUrl;
+                adVideo.classList.remove('hidden');
                 timerBox.classList.remove('hidden');
+                adVideo.play().catch(e => console.log("Esperando interacción para play"));
 
-                let timeLeft = 7; // Segundos que durará el video de publicidad
+                let timeLeft = 7; // Segundos de duración del anuncio
                 const countdown = setInterval(() => {
                     timeLeft--;
                     countSpan.innerText = timeLeft;
                     
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
-                        // 2. Quitar publicidad y cargar tu video con tus bloqueos
-                        adFrame.classList.add('hidden');
-                        adFrame.src = ""; // Detener el audio del anuncio
+                        // 2. Limpiar anuncio y cargar el video principal CON TU SEGURIDAD
+                        adVideo.pause();
+                        adVideo.classList.add('hidden');
                         timerBox.classList.add('hidden');
                         
                         videoFrame.src = videoUrl;
@@ -60,12 +66,12 @@
                     }
                 }, 1000);
             } else {
-                // Si no hay publicidad en el link, cargar directo tu video
+                // Sin anuncio: directo al video protegido
                 videoFrame.src = videoUrl;
                 videoFrame.classList.remove('hidden');
             }
         } else {
-            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
+            document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Esperando contenido...</p>';
         }
     </script>
 </body>
