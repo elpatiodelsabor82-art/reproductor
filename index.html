@@ -2,25 +2,24 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        iframe, video { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
-        #ad-overlay { 
+        iframe { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
+        #timer-box { 
             position: absolute; top: 20px; right: 20px; 
-            background: rgba(0,0,0,0.85); color: #fff; 
-            padding: 12px 20px; border-radius: 4px; z-index: 1000;
-            border: 1px solid #444; font-size: 14px;
+            background: rgba(0,0,0,0.7); color: #fff; 
+            padding: 8px 15px; border-radius: 5px; z-index: 100;
+            border: 1px solid #555; pointer-events: none;
         }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="ad-overlay" class="hidden">Publicidad: <span id="timer">5</span>s</div>
+    <div id="timer-box" class="hidden">Publicidad: <span id="count">7</span>s</div>
     
-    <video id="nativeVideo" class="hidden" autoplay playsinline></video>
-    
+    <iframe id="adFrame" class="hidden" allow="autoplay; fullscreen"></iframe>
+
     <iframe id="videoFrame" class="hidden" 
             allow="autoplay; fullscreen; picture-in-picture" 
             allowfullscreen 
@@ -28,48 +27,42 @@
     </iframe>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const adUrl = params.get('ad');
-        const mainUrl = params.get('video');
+        const urlParams = new URLSearchParams(window.location.search);
+        const adUrl = urlParams.get('ad');
+        const videoUrl = urlParams.get('video');
         
+        const adFrame = document.getElementById('adFrame');
         const videoFrame = document.getElementById('videoFrame');
-        const nativeVideo = document.getElementById('nativeVideo');
-        const adOverlay = document.getElementById('ad-overlay');
-        const timerSpan = document.getElementById('timer');
+        const timerBox = document.getElementById('timer-box');
+        const countSpan = document.getElementById('count');
 
-        function cargarContenido(url, esAnuncio = false) {
-            // Si es el video principal (MyVidPlay/Drive), activamos el iframe con TUS BLOQUEOS
-            if (!esAnuncio && (url.includes('drive.google.com') || url.includes('myvidplay') || url.includes('e/'))) {
-                videoFrame.src = url;
-                videoFrame.classList.remove('hidden');
-                nativeVideo.classList.add('hidden');
-            } else {
-                // Para el anuncio MP4 usamos el reproductor limpio
-                nativeVideo.src = url;
-                nativeVideo.classList.remove('hidden');
-                videoFrame.classList.add('hidden');
-                nativeVideo.play();
-            }
-        }
-
-        if (mainUrl) {
+        if (videoUrl) {
             if (adUrl) {
-                adOverlay.classList.remove('hidden');
-                cargarContenido(adUrl, true);
+                // 1. Mostrar y cargar el video de publicidad
+                adFrame.src = adUrl;
+                adFrame.classList.remove('hidden');
+                timerBox.classList.remove('hidden');
 
-                let timeLeft = 7; 
+                let timeLeft = 7; // Segundos que durará el video de publicidad
                 const countdown = setInterval(() => {
                     timeLeft--;
-                    timerSpan.innerText = timeLeft;
+                    countSpan.innerText = timeLeft;
+                    
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
-                        adOverlay.classList.add('hidden');
-                        // Aquí carga el video principal con el sandbox que protege tu sitio
-                        cargarContenido(mainUrl, false);
+                        // 2. Quitar publicidad y cargar tu video con tus bloqueos
+                        adFrame.classList.add('hidden');
+                        adFrame.src = ""; // Detener el audio del anuncio
+                        timerBox.classList.add('hidden');
+                        
+                        videoFrame.src = videoUrl;
+                        videoFrame.classList.remove('hidden');
                     }
                 }, 1000);
             } else {
-                cargarContenido(mainUrl, false);
+                // Si no hay publicidad en el link, cargar directo tu video
+                videoFrame.src = videoUrl;
+                videoFrame.classList.remove('hidden');
             }
         } else {
             document.body.innerHTML = '<p style="color:white;text-align:center;margin-top:20%">Enlace no encontrado</p>';
