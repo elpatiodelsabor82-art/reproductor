@@ -4,23 +4,19 @@
     <meta charset="UTF-8">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        iframe, video { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
-        #timer-box { 
+        iframe { width: 100%; height: 100%; border: none; }
+        #timer { 
             position: absolute; top: 20px; right: 20px; 
-            background: rgba(0,0,0,0.8); color: #fff; 
-            padding: 10px 20px; border-radius: 5px; z-index: 1000;
-            border: 1px solid #444; font-weight: bold;
+            background: rgba(0,0,0,0.8); color: white; 
+            padding: 10px; border-radius: 5px; z-index: 10;
         }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="timer-box" class="hidden">Publicidad: <span id="count">7</span>s</div>
-    
-    <video id="adVideo" class="hidden" autoplay muted playsinline></video>
+    <div id="timer" style="display: none;">Publicidad: <span id="seg">7</span>s</div>
 
-    <iframe id="videoFrame" class="hidden" 
+    <iframe id="videoFrame" 
             allow="autoplay; fullscreen; picture-in-picture" 
             allowfullscreen 
             sandbox="allow-forms allow-scripts allow-same-origin allow-presentation">
@@ -28,47 +24,33 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        let adUrl = urlParams.get('ad');
         const videoUrl = urlParams.get('video');
+        // Usamos el nombre del archivo directamente como me pediste
+        const adUrl = "En espera de capitulo.mp4"; 
         
-        const adVideo = document.getElementById('adVideo');
-        const videoFrame = document.getElementById('videoFrame');
-        const timerBox = document.getElementById('timer-box');
-        const countSpan = document.getElementById('count');
+        const iframe = document.getElementById('videoFrame');
+        const timerDiv = document.getElementById('timer');
+        const segSpan = document.getElementById('seg');
 
         if (videoUrl) {
-            // Si el link de anuncio tiene espacios, el navegador los necesita codificados
-            const adSource = adUrl ? encodeURI(adUrl) : "En%20espera%20de%20capitulo.mp4";
-
-            if (adSource) {
-                adVideo.src = adSource;
-                adVideo.classList.remove('hidden');
-                timerBox.classList.remove('hidden');
-
-                // Forzar reproducción
-                adVideo.play().catch(() => {
-                    console.log("El navegador bloqueó el autoplay, esperando clic.");
-                });
-
-                let timeLeft = 7; 
-                const countdown = setInterval(() => {
-                    timeLeft--;
-                    countSpan.innerText = timeLeft;
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        adVideo.pause();
-                        adVideo.classList.add('hidden');
-                        timerBox.classList.add('hidden');
-                        
-                        videoFrame.src = videoUrl;
-                        videoFrame.classList.remove('hidden');
-                    }
-                }, 1000);
-            } else {
-                videoFrame.src = videoUrl;
-                videoFrame.classList.remove('hidden');
-            }
+            // 1. Cargamos la publicidad en el mismo iframe
+            iframe.src = adUrl;
+            timerDiv.style.display = 'block';
+            
+            let timeLeft = 7;
+            const countdown = setInterval(() => {
+                timeLeft--;
+                segSpan.innerText = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    timerDiv.style.display = 'none';
+                    // 2. Cambiamos el contenido del mismo iframe al video principal
+                    iframe.src = videoUrl;
+                }
+            }, 1000);
+        } else {
+            document.body.innerHTML = '<p style="color:white;text-align:center">Enlace no encontrado</p>';
         }
     </script>
 </body>
