@@ -41,16 +41,18 @@
                 const countdown = setInterval(() => {
                     timeLeft--;
                     segSpan.innerText = timeLeft;
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        timerDiv.style.display = 'none';
-                        
-                        // Cuando termina la publicidad, forzamos autoplay en la película
-                        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
-                        iframe.src = cleanVideoUrl;
-                    }
-                }, 1000);
-            } else {
+                   if (timeLeft <= 0) {
+    clearInterval(countdown);
+    timerDiv.style.display = 'none';
+    
+    // PRIMERO: Limpiamos el iframe por completo
+    iframe.src = "about:blank"; 
+    
+    // SEGUNDO: Cargamos la película después de un pequeño respiro (100ms)
+    setTimeout(() => {
+        iframe.src = videoUrl;
+    }, 100);}
+    else {
                 let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
                 iframe.src = cleanVideoUrl;
             }
