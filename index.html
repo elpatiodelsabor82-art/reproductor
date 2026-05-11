@@ -16,39 +16,46 @@
     <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"></iframe>
 
     <script>
-        // LEER LOS DATOS DESDE LA URL (SOPORTA ? Y #)
-        const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
-        const videoUrl = params.get('video');
-        const adUrl = params.get('ad');
-        
-        const iframe = document.getElementById('videoFrame');
-        const timerDiv = document.getElementById('timer');
-        const segSpan = document.getElementById('seg');
-        const overlay = document.getElementById('overlay');
+    const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
+    const videoUrl = params.get('video');
+    const adUrl = params.get('ad');
+    
+    const iframe = document.getElementById('videoFrame');
+    const timerDiv = document.getElementById('timer');
+    const segSpan = document.getElementById('seg');
+    const overlay = document.getElementById('overlay');
 
-        document.getElementById('btn-entrar').onclick = () => {
-            overlay.style.display = 'none'; 
-            iframe.style.display = 'block'; 
-            
-            if (videoUrl) {
-                if (adUrl) {
-                    iframe.src = adUrl;
-                    timerDiv.style.display = 'block';
-                    let timeLeft = 21;
-                    const countdown = setInterval(() => {
-                        timeLeft--;
-                        segSpan.innerText = timeLeft;
-                        if (timeLeft <= 0) {
-                            clearInterval(countdown);
-                            timerDiv.style.display = 'none';
-                            iframe.src = videoUrl;
-                        }
-                    }, 1000);
-                } else {
-                    iframe.src = videoUrl;
-                }
+    document.getElementById('btn-entrar').onclick = () => {
+        overlay.style.display = 'none'; 
+        iframe.style.display = 'block'; 
+        
+        if (videoUrl) {
+            if (adUrl) {
+                // Forzamos el autoplay agregándolo correctamente al final
+                let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
+                iframe.src = cleanAdUrl;
+                
+                timerDiv.style.display = 'block';
+                let timeLeft = 21; 
+                
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    segSpan.innerText = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        timerDiv.style.display = 'none';
+                        
+                        // Cuando termina la publicidad, forzamos autoplay en la película
+                        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                        iframe.src = cleanVideoUrl;
+                    }
+                }, 1000);
+            } else {
+                let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                iframe.src = cleanVideoUrl;
             }
-        };
-    </script>
+        }
+    };
+</script>
 </body>
 </html>
