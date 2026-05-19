@@ -22,10 +22,10 @@
             width: 100px;
             height: 100px;
             cursor: pointer; 
-            background: #8e44ad; /* Morado */
+            background: #8e44ad; 
             color: white; 
             border: none; 
-            border-radius: 50%; /* Forma circular */
+            border-radius: 50%; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -38,14 +38,13 @@
             transform: scale(1.1);
         }
 
-        /* Triángulo del logo Play */
         .play-icon {
             width: 0;
             height: 0;
             border-top: 20px solid transparent;
             border-bottom: 20px solid transparent;
             border-left: 35px solid white;
-            margin-left: 8px; /* Ajuste óptico para centrar el triángulo */
+            margin-left: 8px; 
         }
 
         #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 10; display: none; }
@@ -80,6 +79,9 @@
         if (videoUrl) {
             if (adUrl) {
                 let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
+                
+                // Bloqueo estricto para el anuncio (Sin popups)
+                iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
                 iframe.src = cleanAdUrl;
                 
                 timerDiv.style.display = 'block';
@@ -92,11 +94,17 @@
                         clearInterval(countdown);
                         timerDiv.style.display = 'none';
                         
+                        // CONFIGURACIÓN PARA EL VIDEO: Bloquea descargas, pero permite clics y botones de Drive
+                        // Al NO incluir 'allow-downloads', el navegador deniega cualquier intento de descarga
+                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+                        
                         let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
                         iframe.src = cleanVideoUrl;
                     }
                 }, 1000);
             } else {
+                // Si entra directo sin anuncio, también lo protegemos contra descargas
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
                 let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
                 iframe.src = cleanVideoUrl;
             }
