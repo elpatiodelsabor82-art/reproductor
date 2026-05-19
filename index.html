@@ -4,8 +4,23 @@
     <meta charset="UTF-8">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        
+        /* Contenedor relativo para poder posicionar el bloqueo encima */
+        .video-wrapper { position: relative; width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         
+        /* CAPA INVISIBLE ANTI-FLECHA */
+        #bloqueo-flecha {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
+            height: 60px;  /* Alto suficiente para tapar la barra superior */
+            background: rgba(0,0,0,0); /* Totalmente transparente */
+            z-index: 1000; /* Por encima del iframe */
+            display: none; /* Se activa al terminar la publicidad */
+        }
+
         #overlay { 
             position: absolute; 
             width: 100%; 
@@ -17,7 +32,6 @@
             z-index: 2000; 
         }
 
-        /* Botón morado circular */
         #btn-entrar { 
             width: 100px;
             height: 100px;
@@ -33,21 +47,9 @@
             box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
         }
 
-        #btn-entrar:hover {
-            background: #a55eca;
-            transform: scale(1.1);
-        }
-
-        .play-icon {
-            width: 0;
-            height: 0;
-            border-top: 20px solid transparent;
-            border-bottom: 20px solid transparent;
-            border-left: 35px solid white;
-            margin-left: 8px; 
-        }
-
-        #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 10; display: none; }
+        #btn-entrar:hover { background: #a55eca; transform: scale(1.1); }
+        .play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
+        #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
     </style>
 </head>
 <body>
@@ -60,7 +62,10 @@
 
     <div id="timer">Publicidad: <span id="seg">21</span>s</div>
     
-    <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    <div class="video-wrapper">
+        <div id="bloqueo-flecha"></div>
+        <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    </div>
 
     <script>
     const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
@@ -71,6 +76,7 @@
     const timerDiv = document.getElementById('timer');
     const segSpan = document.getElementById('seg');
     const overlay = document.getElementById('overlay');
+    const bloqueoFlecha = document.getElementById('bloqueo-flecha');
 
     document.getElementById('btn-entrar').onclick = () => {
         overlay.style.display = 'none'; 
@@ -80,7 +86,7 @@
             if (adUrl) {
                 let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
                 
-                // Bloqueo estricto para el anuncio (Sin popups)
+                // Publicidad estricta sin popups
                 iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
                 iframe.src = cleanAdUrl;
                 
@@ -94,17 +100,19 @@
                         clearInterval(countdown);
                         timerDiv.style.display = 'none';
                         
-                        // CONFIGURACIÓN PARA EL VIDEO: Bloquea descargas, pero permite clics y botones de Drive
-                        // Al NO incluir 'allow-downloads', el navegador deniega cualquier intento de descarga
-                        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+                        // Quitamos sandbox para que carguen bien los botones nativos de Drive
+                        iframe.removeAttribute('sandbox');
+                        
+                        // ACTIVAMOS LA CAPA INVISIBLE para tapar la flecha de Drive
+                        bloqueoFlecha.style.display = 'block';
                         
                         let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
                         iframe.src = cleanVideoUrl;
                     }
                 }, 1000);
             } else {
-                // Si entra directo sin anuncio, también lo protegemos contra descargas
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation');
+                iframe.removeAttribute('sandbox');
+                bloqueoFlecha.style.display = 'block';
                 let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
                 iframe.src = cleanVideoUrl;
             }
