@@ -15,36 +15,63 @@
         .video-js { width: 100% !important; height: 100% !important; }
         
         /* ========================================================
-           PERSONALIZACIÓN DE COLORES PARA EL REPRODUCTOR (VIDEO.JS)
+           CORRECCIÓN DE COLORES Y CONTROLES PARA VIDEO.JS
            ======================================================== */
         
-        /* 1. Color del botón de Play Central */
+        /* 1. DISEÑO BONITO PARA EL BOTÓN CENTRAL DE PLAY */
         .video-js .vjs-big-play-button {
-            background-color: rgba(142, 68, 173, 0.8) !important; /* Morado con transparencia */
-            border-color: #8e44ad !important;
-            border-radius: 50% !important; /* Redondo como tu botón de entrar */
-            width: 80px !important;
-            height: 80px !important;
-            line-height: 80px !important;
-            margin-top: -40px !important;
-            margin-left: -40px !important;
-            box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
-            transition: transform 0.2s, background-color 0.3s !important;
+            background-color: #8e44ad !important; /* Morado puro */
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 50% !important; /* Completamente redondo */
+            width: 90px !important;
+            height: 90px !important;
+            line-height: 90px !important;
+            margin-top: -45px !important; /* Centrado perfecto */
+            margin-left: -45px !important;
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.8) !important; /* Brillo morado */
+            transition: transform 0.3s ease, background-color 0.3s ease !important;
+            font-size: 3.5em !important;
         }
-        /* Efecto al pasar el mouse por el botón central */
-        .video-js:hover .vjs-big-play-button, .video-js .vjs-big-play-button:focus {
-            background-color: #a55eca !important;
-            transform: scale(1.1);
+        
+        /* Efecto hover elegante para el botón de play */
+        .video-js:hover .vjs-big-play-button {
+            background-color: #a55eca !important; /* Morado más claro al pasar el mouse */
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 40px rgba(165, 94, 202, 0.9) !important;
         }
 
-        /* 2. Color de la barra de progreso (Línea de tiempo) */
-        .video-js .vjs-play-progress, .video-js .vjs-volume-level {
-            background-color: #8e44ad !important; /* Línea morada */
+        /* 2. PINTAR TODOS LOS CONTROLES E ICONOS DE LA BARRA INFERIOR */
+        /* Color de los iconos (Play, Volumen, Pantalla completa, etc.) */
+        .video-js .vjs-control-bar {
+            background-color: rgba(15, 15, 15, 0.85) !important; /* Fondo de barra oscuro elegante */
+            height: 50px !important;
+        }
+        
+        .video-js .vjs-button > .vjs-icon-placeholder:before {
+            color: #ffffff !important; /* Iconos blancos por defecto */
+            line-height: 50px !important;
+        }
+        
+        /* Cambio de color a morado cuando pasas el mouse por encima de cualquier botón */
+        .video-js .vjs-button:hover > .vjs-icon-placeholder:before {
+            color: #a55eca !important; 
         }
 
-        /* 3. Color de los iconos al pasarles el mouse encima */
-        .video-js .vjs-control:hover:before, .video-js .vjs-control:focus:before {
-            color: #a55eca !important;
+        /* 3. COLORES DE LA BARRA DE PROGRESO (LÍNEA DE TIEMPO) */
+        /* Lo que ya se ha visto (Barra de reproducción) */
+        .video-js .vjs-play-progress {
+            background-color: #8e44ad !important; /* Barra morada */
+        }
+        /* El círculo/tirador de la barra de progreso */
+        .video-js .vjs-play-progress:before {
+            color: #ffffff !important;
+            font-size: 1.3em !important;
+            top: -3px !important;
+        }
+        /* Barra de volumen */
+        .video-js .vjs-volume-level {
+            background-color: #8e44ad !important; /* Volumen en morado */
         }
 
         /* ========================================================
@@ -52,16 +79,16 @@
            ======================================================== */
         .reproductor-logo {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 140px; /* Ajusta el ancho de tu logo */
+            top: 25px;
+            right: 25px;
+            width: 140px; 
             height: auto;
-            z-index: 10; /* Por encima del video */
-            pointer-events: none; /* Hace que los clics pasen a través del logo hacia el video */
-            opacity: 0.75; /* Un toque de transparencia tipo marca de agua */
-            transition: opacity 0.3s;
+            z-index: 10; 
+            pointer-events: none; 
+            opacity: 0.8; 
+            transition: opacity 0.4s ease;
         }
-        /* El logo se oculta automáticamente si el usuario esconde los controles para pantalla limpia */
+        /* El logo desaparece si los controles se ocultan */
         .vjs-user-inactive .reproductor-logo {
             opacity: 0;
         }
@@ -157,8 +184,13 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
+            // CONFIGURACIÓN DE JAVASCRIPT REFORZADA
             var player = videojs('mkvPlayer', {
                 fill: true,
+                controlBar: {
+                    /* ELIMINAMOS EL BOTÓN PICTURE IN PICTURE */
+                    pictureInPictureToggle: false 
+                },
                 html5: {
                     vhs: { 
                         overrideNative: true,
