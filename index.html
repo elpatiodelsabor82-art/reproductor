@@ -15,80 +15,84 @@
         .video-js { width: 100% !important; height: 100% !important; }
         
         /* ========================================================
-           CORRECCIÓN DE COLORES Y CONTROLES PARA VIDEO.JS
+           CORRECCIÓN COMPLETA DE COLORES (ICONS & BARS)
            ======================================================== */
         
-        /* 1. DISEÑO BONITO PARA EL BOTÓN CENTRAL DE PLAY */
+        /* 1. DISEÑO DEL BOTÓN CENTRAL DE PLAY (MORADO REDONDO) */
         .video-js .vjs-big-play-button {
-            background-color: #8e44ad !important; /* Morado puro */
+            background-color: #8e44ad !important; 
             color: #ffffff !important;
             border: none !important;
-            border-radius: 50% !important; /* Completamente redondo */
+            border-radius: 50% !important; 
             width: 90px !important;
             height: 90px !important;
             line-height: 90px !important;
-            margin-top: -45px !important; /* Centrado perfecto */
+            margin-top: -45px !important; 
             margin-left: -45px !important;
-            box-shadow: 0 0 30px rgba(142, 68, 173, 0.8) !important; /* Brillo morado */
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.8) !important; 
             transition: transform 0.3s ease, background-color 0.3s ease !important;
             font-size: 3.5em !important;
         }
-        
-        /* Efecto hover elegante para el botón de play */
         .video-js:hover .vjs-big-play-button {
-            background-color: #a55eca !important; /* Morado más claro al pasar el mouse */
+            background-color: #a55eca !important; 
             transform: scale(1.1) !important;
             box-shadow: 0 0 40px rgba(165, 94, 202, 0.9) !important;
         }
 
-        /* 2. PINTAR TODOS LOS CONTROLES E ICONOS DE LA BARRA INFERIOR */
-        /* Color de los iconos (Play, Volumen, Pantalla completa, etc.) */
+        /* 2. FORZAR COLOR MORADO A TODOS LOS ICONOS BLANCOS DE LA BARRA */
         .video-js .vjs-control-bar {
-            background-color: rgba(15, 15, 15, 0.85) !important; /* Fondo de barra oscuro elegante */
+            background-color: rgba(15, 15, 15, 0.9) !important; 
             height: 50px !important;
         }
         
+        /* Cambiamos el color de los iconos (Play, Mute, Fullscreen, etc.) de blanco a MORADO */
+        .video-js .vjs-control:before, 
         .video-js .vjs-button > .vjs-icon-placeholder:before {
-            color: #ffffff !important; /* Iconos blancos por defecto */
+            color: #8e44ad !important; /* Ahora sí se verán morados */
             line-height: 50px !important;
+            transition: color 0.2s ease;
         }
         
-        /* Cambio de color a morado cuando pasas el mouse por encima de cualquier botón */
+        /* Color cuando pasas el mouse por encima del icono */
+        .video-js .vjs-control:hover:before,
         .video-js .vjs-button:hover > .vjs-icon-placeholder:before {
-            color: #a55eca !important; 
+            color: #a55eca !important; /* Morado encendido al pasar el mouse */
         }
 
-        /* 3. COLORES DE LA BARRA DE PROGRESO (LÍNEA DE TIEMPO) */
-        /* Lo que ya se ha visto (Barra de reproducción) */
+        /* 3. COLORES DE LAS BARRAS (YA FUNCIONABAN, SE MANTIENEN) */
         .video-js .vjs-play-progress {
-            background-color: #8e44ad !important; /* Barra morada */
+            background-color: #8e44ad !important; 
         }
-        /* El círculo/tirador de la barra de progreso */
         .video-js .vjs-play-progress:before {
             color: #ffffff !important;
             font-size: 1.3em !important;
             top: -3px !important;
         }
-        /* Barra de volumen */
         .video-js .vjs-volume-level {
-            background-color: #8e44ad !important; /* Volumen en morado */
+            background-color: #8e44ad !important; 
+        }
+
+        /* El tiempo numérico (00:00 / 02:15) lo dejamos blanco para que resalte y se pueda leer */
+        .video-js .vjs-time-control {
+            color: #ffffff !important;
+            line-height: 50px !important;
         }
 
         /* ========================================================
-           DISEÑO DEL LOGO EN LA PARTE SUPERIOR DERECHA
+           DISEÑO DE TU LOGO OFICIAL EN LA PARTE SUPERIOR DERECHA
            ======================================================== */
         .reproductor-logo {
             position: absolute;
             top: 25px;
             right: 25px;
-            width: 140px; 
+            width: 120px; /* Tamaño ideal para que se vea nítido tu logo */
             height: auto;
             z-index: 10; 
             pointer-events: none; 
-            opacity: 0.8; 
+            opacity: 0.85; 
             transition: opacity 0.4s ease;
         }
-        /* El logo desaparece si los controles se ocultan */
+        /* El logo se oculta cuando los controles desaparecen */
         .vjs-user-inactive .reproductor-logo {
             opacity: 0;
         }
@@ -159,9 +163,9 @@
         
         <div id="mkvContainer" class="video-js-container">
             
-            <img class="reproductor-logo" src="https://pixelblack.eu:443/images/eYyHcZ0MTJTHjYR2lijCidrqQinWPw17DYIQYVlXalSOO17QF6bD-ET11ivCSXj0qpwwbEaTU0UFGom-16Hwrd8sTcZLOE0PpMS5XEx8hANkzyy8S_jS1sICR02UirfW4JLmALrbVBw0ttMY1gKTk4lbSM9dBJyV4-5AA881FBse1V5QxkO6hq0NQw8lS6eyxGzheWo6aZGJ-cLUzyr691UrApSkm-AuSxwXY2N-_ws.png" alt="Logo">
+            <img class="reproductor-logo" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEil2dds7gIHlc-jR_PV41bR6HiwYzt4n7ciZhiP8KlTlWXXIyZrrYzCYP1UwpK-bLTm6eI4Rpvhvaq3Z-7l5qIyR-BuJnDIi_SjWJ2dWcWS31q7zCws74ta2IAa10-ohsOXV44ts5rekRSCpfjoDAAgJcpXnFo2VXljQ2lswxjM6CkdJI1nGq_cqmuGbBg/s1600/logo300px.png" alt="Protocolo Candela">
             
-            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
+            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls disablePictureInPicture controlsList="nodownload nopictureinpicture" preload="auto"></video>
         </div>
     </div>
 
@@ -184,11 +188,10 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // CONFIGURACIÓN DE JAVASCRIPT REFORZADA
+            // Desactivamos el Picture in Picture también desde los ajustes del plugin de JavaScript
             var player = videojs('mkvPlayer', {
                 fill: true,
                 controlBar: {
-                    /* ELIMINAMOS EL BOTÓN PICTURE IN PICTURE */
                     pictureInPictureToggle: false 
                 },
                 html5: {
