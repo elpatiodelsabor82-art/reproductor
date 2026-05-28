@@ -45,10 +45,9 @@
             height: 50px !important;
         }
         
-        /* Cambiamos el color de los iconos (Play, Mute, Fullscreen, etc.) de blanco a MORADO */
         .video-js .vjs-control:before, 
         .video-js .vjs-button > .vjs-icon-placeholder:before {
-            color: #8e44ad !important; /* Ahora sí se verán morados */
+            color: #8e44ad !important; /* Iconos morados */
             line-height: 50px !important;
             transition: color 0.2s ease;
         }
@@ -59,7 +58,7 @@
             color: #a55eca !important; /* Morado encendido al pasar el mouse */
         }
 
-        /* 3. COLORES DE LAS BARRAS (YA FUNCIONABAN, SE MANTIENEN) */
+        /* 3. COLORES DE LAS BARRAS */
         .video-js .vjs-play-progress {
             background-color: #8e44ad !important; 
         }
@@ -72,23 +71,20 @@
             background-color: #8e44ad !important; 
         }
 
-        /* El tiempo numérico (00:00 / 02:15) lo dejamos blanco para que resalte y se pueda leer */
+        /* Tiempo numérico en blanco para lectura limpia */
         .video-js .vjs-time-control {
             color: #ffffff !important;
             line-height: 50px !important;
         }
 
         /* ========================================================
-           DISEÑO DE TU LOGO OFICIAL EN LA PARTE SUPERIOR DERECHA
-           ======================================================== */
-       /* ========================================================
            DISEÑO DE TU LOGO OFICIAL (ADAPTABLE A MÓVILES)
            ======================================================== */
         .reproductor-logo {
             position: absolute;
             top: 25px;
             right: 25px;
-            width: 140px; /* Tamaño elegante para Computadoras */
+            width: 140px; /* Tamaño ideal en PC */
             height: auto;
             z-index: 10; 
             pointer-events: none; 
@@ -99,10 +95,10 @@
         /* SI EL DISPOSITIVO ES UN CELULAR (Pantallas de menos de 768px) */
         @media (max-width: 768px) {
             .reproductor-logo {
-                width: 75px; /* Se reduce a casi la mitad en móviles para no estorbar */
-                top: 15px;   /* Se junta un poco más a la esquina */
+                width: 75px; /* Se encoge automáticamente en celulares */
+                top: 15px;   
                 right: 15px;
-                opacity: 0.7; /* Se hace un poquito más transparente tipo marca de agua */
+                opacity: 0.7; 
             }
         }
 
@@ -202,7 +198,7 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // Desactivamos el Picture in Picture también desde los ajustes del plugin de JavaScript
+            // Configuración JS para quitar el botón PiP del reproductor web
             var player = videojs('mkvPlayer', {
                 fill: true,
                 controlBar: {
