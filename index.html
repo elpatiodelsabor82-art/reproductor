@@ -5,24 +5,20 @@
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
         
+        /* Contenedor relativo para poder posicionar el bloqueo encima */
         .video-wrapper { position: relative; width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         
-        /* Contenedor dinámico al 100% para la película .mkv */
-        .video-js-container { width: 100%; height: 100%; display: none; }
-        
-        /* OBLIGAMOS A VIDEO.JS A OCUPAR EL ESPACIO COMPLETO DEL CONTENEDOR */
-        .video-js { width: 100% !important; height: 100% !important; }
-        
+        /* CAPA INVISIBLE ANTI-FLECHA */
         #bloqueo-flecha {
             position: absolute;
             top: 0;
             right: 0;
-            width: 180px;  
-            height: 60px;  
-            background: rgba(0,0,0,0); 
-            z-index: 1000; 
-            display: none; 
+            width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
+            height: 60px;  /* Alto suficiente para tapar la barra superior */
+            background: rgba(0,0,0,0); /* Totalmente transparente */
+            z-index: 1000; /* Por encima del iframe */
+            display: none; /* Se activa al terminar la publicidad */
         }
 
         #overlay { 
@@ -55,11 +51,6 @@
         .play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
         #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
     </style>
-
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/6.3.0/mux.min.js"></script>
 </head>
 <body>
 
@@ -73,12 +64,7 @@
     
     <div class="video-wrapper">
         <div id="bloqueo-flecha"></div>
-        
         <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
-        
-        <div id="mkvContainer" class="video-js-container">
-            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
-        </div>
     </div>
 
     <script>
@@ -87,49 +73,10 @@
     const adUrl = params.get('ad');
     
     const iframe = document.getElementById('videoFrame');
-    const mkvContainer = document.getElementById('mkvContainer');
     const timerDiv = document.getElementById('timer');
     const segSpan = document.getElementById('seg');
     const overlay = document.getElementById('overlay');
     const bloqueoFlecha = document.getElementById('bloqueo-flecha');
-
-    function reproducirVideoFinal() {
-        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
-
-        if (videoUrl.includes('.mkv')) {
-            iframe.style.display = 'none';
-            mkvContainer.style.display = 'block';
-
-            // Configuramos Video.js con fill: true para obligarlo a estirarse por completo en el contenedor
-            var player = videojs('mkvPlayer', {
-                fill: true, // <- ESTO HACE QUE OCUPE EL 100% DEL ESPACIO DISPONIBLE
-                html5: {
-                    vhs: { 
-                        overrideNative: true,
-                        enableLowInitialPlaylistAudio: true
-                    },
-                    nativeAudioTracks: false,
-                    nativeVideoTracks: false
-                }
-            });
-
-            // Forzamos al reproductor a tratar el stream como un flujo de datos binarios decodificables
-            player.src({ type: 'video/mp4', src: videoUrl });
-            
-            player.ready(() => {
-                // Forzamos el volumen al máximo y encendemos la reproducción
-                player.volume(1.0);
-                player.play().catch(function(error) {
-                    console.log("Error al reproducir automáticamente: ", error);
-                });
-            });
-
-        } else {
-            iframe.removeAttribute('sandbox');
-            bloqueoFlecha.style.display = 'block';
-            iframe.src = cleanVideoUrl;
-        }
-    }
 
     document.getElementById('btn-entrar').onclick = () => {
         overlay.style.display = 'none'; 
@@ -139,6 +86,7 @@
             if (adUrl) {
                 let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
                 
+                // Publicidad estricta sin popups
                 iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
                 iframe.src = cleanAdUrl;
                 
@@ -151,11 +99,22 @@
                     if (timeLeft <= 0) {
                         clearInterval(countdown);
                         timerDiv.style.display = 'none';
-                        reproducirVideoFinal();
+                        
+                        // Quitamos sandbox para que carguen bien los botones nativos de Drive
+                        iframe.removeAttribute('sandbox');
+                        
+                        // ACTIVAMOS LA CAPA INVISIBLE para tapar la flecha de Drive
+                        bloqueoFlecha.style.display = 'block';
+                        
+                        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                        iframe.src = cleanVideoUrl;
                     }
                 }, 1000);
             } else {
-                reproducirVideoFinal();
+                iframe.removeAttribute('sandbox');
+                bloqueoFlecha.style.display = 'block';
+                let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                iframe.src = cleanVideoUrl;
             }
         }
     };
