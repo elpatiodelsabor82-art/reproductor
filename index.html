@@ -9,11 +9,66 @@
         iframe { width: 100%; height: 100%; border: none; display: none; }
         
         /* Contenedor dinámico al 100% para la película .mkv */
-        .video-js-container { width: 100%; height: 100%; display: none; }
+        .video-js-container { position: relative; width: 100%; height: 100%; display: none; }
         
-        /* OBLIGAMOS A VIDEO.JS A OCUPAR EL ESPACIO COMPLETO DEL CONTENEDOR */
+        /* OBLIGAMOS A VIDEO.JS A OCUPAR EL ESPACIO COMPLETO */
         .video-js { width: 100% !important; height: 100% !important; }
         
+        /* ========================================================
+           PERSONALIZACIÓN DE COLORES PARA EL REPRODUCTOR (VIDEO.JS)
+           ======================================================== */
+        
+        /* 1. Color del botón de Play Central */
+        .video-js .vjs-big-play-button {
+            background-color: rgba(142, 68, 173, 0.8) !important; /* Morado con transparencia */
+            border-color: #8e44ad !important;
+            border-radius: 50% !important; /* Redondo como tu botón de entrar */
+            width: 80px !important;
+            height: 80px !important;
+            line-height: 80px !important;
+            margin-top: -40px !important;
+            margin-left: -40px !important;
+            box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
+            transition: transform 0.2s, background-color 0.3s !important;
+        }
+        /* Efecto al pasar el mouse por el botón central */
+        .video-js:hover .vjs-big-play-button, .video-js .vjs-big-play-button:focus {
+            background-color: #a55eca !important;
+            transform: scale(1.1);
+        }
+
+        /* 2. Color de la barra de progreso (Línea de tiempo) */
+        .video-js .vjs-play-progress, .video-js .vjs-volume-level {
+            background-color: #8e44ad !important; /* Línea morada */
+        }
+
+        /* 3. Color de los iconos al pasarles el mouse encima */
+        .video-js .vjs-control:hover:before, .video-js .vjs-control:focus:before {
+            color: #a55eca !important;
+        }
+
+        /* ========================================================
+           DISEÑO DEL LOGO EN LA PARTE SUPERIOR DERECHA
+           ======================================================== */
+        .reproductor-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 140px; /* Ajusta el ancho de tu logo */
+            height: auto;
+            z-index: 10; /* Por encima del video */
+            pointer-events: none; /* Hace que los clics pasen a través del logo hacia el video */
+            opacity: 0.75; /* Un toque de transparencia tipo marca de agua */
+            transition: opacity 0.3s;
+        }
+        /* El logo se oculta automáticamente si el usuario esconde los controles para pantalla limpia */
+        .vjs-user-inactive .reproductor-logo {
+            opacity: 0;
+        }
+
+        /* ========================================================
+           ESTILOS ORIGINALES DE TU INTERFAZ (INTACTOS)
+           ======================================================== */
         #bloqueo-flecha {
             position: absolute;
             top: 0;
@@ -58,7 +113,6 @@
 
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/6.3.0/mux.min.js"></script>
 </head>
 <body>
@@ -77,6 +131,9 @@
         <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
         
         <div id="mkvContainer" class="video-js-container">
+            
+            <img class="reproductor-logo" src="https://pixelblack.eu:443/images/eYyHcZ0MTJTHjYR2lijCidrqQinWPw17DYIQYVlXalSOO17QF6bD-ET11ivCSXj0qpwwbEaTU0UFGom-16Hwrd8sTcZLOE0PpMS5XEx8hANkzyy8S_jS1sICR02UirfW4JLmALrbVBw0ttMY1gKTk4lbSM9dBJyV4-5AA881FBse1V5QxkO6hq0NQw8lS6eyxGzheWo6aZGJ-cLUzyr691UrApSkm-AuSxwXY2N-_ws.png" alt="Logo">
+            
             <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
         </div>
     </div>
@@ -96,13 +153,12 @@
     function reproducirVideoFinal() {
         let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
 
-        if (videoUrl.includes('.mkv')) {
+        if (videoUrl && videoUrl.includes('.mkv')) {
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // Configuramos Video.js con fill: true para obligarlo a estirarse por completo en el contenedor
             var player = videojs('mkvPlayer', {
-                fill: true, // <- ESTO HACE QUE OCUPE EL 100% DEL ESPACIO DISPONIBLE
+                fill: true,
                 html5: {
                     vhs: { 
                         overrideNative: true,
@@ -113,11 +169,9 @@
                 }
             });
 
-            // Forzamos al reproductor a tratar el stream como un flujo de datos binarios decodificables
             player.src({ type: 'video/mp4', src: videoUrl });
             
             player.ready(() => {
-                // Forzamos el volumen al máximo y encendemos la reproducción
                 player.volume(1.0);
                 player.play().catch(function(error) {
                     console.log("Error al reproducir automáticamente: ", error);
