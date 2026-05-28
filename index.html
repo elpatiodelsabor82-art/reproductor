@@ -2,23 +2,25 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!-- MANTENEMOS TUS ESTILOS EXACTOS -->
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
         
-        /* Contenedor relativo para poder posicionar el bloqueo encima */
         .video-wrapper { position: relative; width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         
-        /* CAPA INVISIBLE ANTI-FLECHA */
+        /* Contenedor dinámico para cuando se active una película .mkv */
+        .video-js-container { width: 100%; height: 100%; display: none; }
+        
         #bloqueo-flecha {
             position: absolute;
             top: 0;
             right: 0;
-            width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
-            height: 60px;  /* Alto suficiente para tapar la barra superior */
-            background: rgba(0,0,0,0); /* Totalmente transparente */
-            z-index: 1000; /* Por encima del iframe */
-            display: none; /* Se activa al terminar la publicidad */
+            width: 180px;  
+            height: 60px;  
+            background: rgba(0,0,0,0); 
+            z-index: 1000; 
+            display: none; 
         }
 
         #overlay { 
@@ -51,6 +53,10 @@
         .play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
         #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
     </style>
+
+    <!-- AGREGAMOS LAS LIBRERÍAS DE VIDEO.JS (Solo se activan si es un archivo .mkv) -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 </head>
 <body>
 
@@ -64,7 +70,14 @@
     
     <div class="video-wrapper">
         <div id="bloqueo-flecha"></div>
+        
+        <!-- REPRODUCTOR 1: Tu iframe original (Sigue funcionando idéntico para Google Drive) -->
         <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+        
+        <!-- REPRODUCTOR 2: Video.js avanzado (Oculto por defecto, se activa solo con películas .mkv) -->
+        <div id="mkvContainer" class="video-js-container">
+            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" width="100%" height="100%"></video>
+        </div>
     </div>
 
     <script>
@@ -73,10 +86,38 @@
     const adUrl = params.get('ad');
     
     const iframe = document.getElementById('videoFrame');
+    const mkvContainer = document.getElementById('mkvContainer');
     const timerDiv = document.getElementById('timer');
     const segSpan = document.getElementById('seg');
     const overlay = document.getElementById('overlay');
     const bloqueoFlecha = document.getElementById('bloqueo-flecha');
+
+    // Función inteligente para inyectar el video final con sonido si es necesario
+    function reproducirVideoFinal() {
+        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+
+        if (videoUrl.includes('.mkv')) {
+            // SI ES UN ARCHIVO MKV: Ocultamos el iframe y encendemos Video.js con decodificación de audio
+            iframe.style.display = 'none';
+            mkvContainer.style.display = 'block';
+
+            var player = videojs('mkvPlayer', {
+                html5: {
+                    vhs: { overrideNative: true }, // Forza la decodificación por software para activar el audio mudo
+                    nativeAudioTracks: false,
+                    nativeVideoTracks: false
+                }
+            });
+            player.src({ type: 'video/mp4', src: videoUrl });
+            player.ready(() => { player.play(); });
+
+        } else {
+            // SI ES GOOGLE DRIVE: Sigue ejecutando tu código original sin cambiar nada
+            iframe.removeAttribute('sandbox');
+            bloqueoFlecha.style.display = 'block';
+            iframe.src = cleanVideoUrl;
+        }
+    }
 
     document.getElementById('btn-entrar').onclick = () => {
         overlay.style.display = 'none'; 
@@ -86,7 +127,7 @@
             if (adUrl) {
                 let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
                 
-                // Publicidad estricta sin popups
+                // Publicidad estricta sin popups original
                 iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
                 iframe.src = cleanAdUrl;
                 
@@ -100,21 +141,13 @@
                         clearInterval(countdown);
                         timerDiv.style.display = 'none';
                         
-                        // Quitamos sandbox para que carguen bien los botones nativos de Drive
-                        iframe.removeAttribute('sandbox');
-                        
-                        // ACTIVAMOS LA CAPA INVISIBLE para tapar la flecha de Drive
-                        bloqueoFlecha.style.display = 'block';
-                        
-                        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
-                        iframe.src = cleanVideoUrl;
+                        // Llama a la reproducción final al terminar los 21 segundos
+                        reproducirVideoFinal();
                     }
                 }, 1000);
             } else {
-                iframe.removeAttribute('sandbox');
-                bloqueoFlecha.style.display = 'block';
-                let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
-                iframe.src = cleanVideoUrl;
+                // Si no hay publicidad asignada, reproduce directo
+                reproducirVideoFinal();
             }
         }
     };
