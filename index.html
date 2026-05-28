@@ -81,17 +81,31 @@
         /* ========================================================
            DISEÑO DE TU LOGO OFICIAL EN LA PARTE SUPERIOR DERECHA
            ======================================================== */
+       /* ========================================================
+           DISEÑO DE TU LOGO OFICIAL (ADAPTABLE A MÓVILES)
+           ======================================================== */
         .reproductor-logo {
             position: absolute;
             top: 25px;
             right: 25px;
-            width: 120px; /* Tamaño ideal para que se vea nítido tu logo */
+            width: 140px; /* Tamaño elegante para Computadoras */
             height: auto;
             z-index: 10; 
             pointer-events: none; 
             opacity: 0.85; 
-            transition: opacity 0.4s ease;
+            transition: opacity 0.4s ease, width 0.3s ease;
         }
+
+        /* SI EL DISPOSITIVO ES UN CELULAR (Pantallas de menos de 768px) */
+        @media (max-width: 768px) {
+            .reproductor-logo {
+                width: 75px; /* Se reduce a casi la mitad en móviles para no estorbar */
+                top: 15px;   /* Se junta un poco más a la esquina */
+                right: 15px;
+                opacity: 0.7; /* Se hace un poquito más transparente tipo marca de agua */
+            }
+        }
+
         /* El logo se oculta cuando los controles desaparecen */
         .vjs-user-inactive .reproductor-logo {
             opacity: 0;
