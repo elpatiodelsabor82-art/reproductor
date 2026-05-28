@@ -8,8 +8,11 @@
         .video-wrapper { position: relative; width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         
-        /* Contenedor dinámico para cuando se active una película .mkv */
+        /* Contenedor dinámico al 100% para la película .mkv */
         .video-js-container { width: 100%; height: 100%; display: none; }
+        
+        /* OBLIGAMOS A VIDEO.JS A OCUPAR EL ESPACIO COMPLETO DEL CONTENEDOR */
+        .video-js { width: 100% !important; height: 100% !important; }
         
         #bloqueo-flecha {
             position: absolute;
@@ -53,11 +56,9 @@
         #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
     </style>
 
-    <!-- REPRODUCTOR AVANZADO CON SOPORTE DE CÓDECS DIGITALES EXTRA -->
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     
-    <!-- Demuxer necesario para desempaquetar las pistas de audio complejas dentro del MKV en la web -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/6.3.0/mux.min.js"></script>
 </head>
 <body>
@@ -73,12 +74,10 @@
     <div class="video-wrapper">
         <div id="bloqueo-flecha"></div>
         
-        <!-- REPRODUCTOR 1: Tu iframe original para Google Drive -->
         <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
         
-        <!-- REPRODUCTOR 2: Video.js modificado para remuxing de audio -->
         <div id="mkvContainer" class="video-js-container">
-            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" width="100%" height="100%"></video>
+            <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
         </div>
     </div>
 
@@ -101,8 +100,9 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // Configuramos Video.js anulando la lectura nativa por completo para forzar decodificación binaria de pistas AC3/DTS
+            // Configuramos Video.js con fill: true para obligarlo a estirarse por completo en el contenedor
             var player = videojs('mkvPlayer', {
+                fill: true, // <- ESTO HACE QUE OCUPE EL 100% DEL ESPACIO DISPONIBLE
                 html5: {
                     vhs: { 
                         overrideNative: true,
