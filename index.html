@@ -199,14 +199,10 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // =========================================================================
-            // REEMPLAZA ESTA URL CON TU LINK REAL DE RENDER:
-            // Debe terminar exactamente en: /stream?url=
-            // =========================================================================
-            const urlServidorRender = "https://protocolo-candela-stream.onrender.com/stream?url=";
+            // Tu URL real de Render inyectada directamente para el stream
+            const urlServidorRender = "https://kikeflix-mkv-server-1.onrender.com/stream?url=";
             const videoModificadoConAudio = urlServidorRender + encodeURIComponent(videoUrl);
 
-            // Configuración de Video.js optimizada para recibir el stream limpio desde Render
             var player = videojs('mkvPlayer', {
                 fill: true,
                 controlBar: {
@@ -214,7 +210,7 @@
                 }
             });
 
-            // Cargamos el flujo de datos que viene directamente procesado por FFmpeg
+            // Conectamos el reproductor al flujo procesado por Render
             player.src({ type: 'video/mp4', src: videoModificadoConAudio });
             
             player.ready(() => {
