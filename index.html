@@ -199,25 +199,23 @@
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // Configuración JS modificada para forzar compatibilidad de audio y quitar el botón PiP
+            // =========================================================================
+            // REEMPLAZA ESTA URL CON TU LINK REAL DE RENDER:
+            // Debe terminar exactamente en: /stream?url=
+            // =========================================================================
+            const urlServidorRender = "https://protocolo-candela-stream.onrender.com/stream?url=";
+            const videoModificadoConAudio = urlServidorRender + encodeURIComponent(videoUrl);
+
+            // Configuración de Video.js optimizada para recibir el stream limpio desde Render
             var player = videojs('mkvPlayer', {
                 fill: true,
                 controlBar: {
                     pictureInPictureToggle: false 
-                },
-                html5: {
-                    vhs: { 
-                        overrideNative: true,
-                        enableLowInitialPlaylistAudio: true,
-                        allowSeeksWithinUnsafeLiveWindow: true
-                    },
-                    // Desactivamos el manejo nativo para procesar las pistas multimedia mediante software
-                    nativeAudioTracks: false,
-                    nativeVideoTracks: false
                 }
             });
 
-            player.src({ type: 'video/mp4', src: videoUrl });
+            // Cargamos el flujo de datos que viene directamente procesado por FFmpeg
+            player.src({ type: 'video/mp4', src: videoModificadoConAudio });
             
             player.ready(() => {
                 player.volume(1.0);
