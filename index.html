@@ -1,236 +1,123 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Player PRO Custom</title>
+    <meta charset="UTF-8">
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        
+        /* Contenedor relativo para poder posicionar el bloqueo encima */
+        .video-wrapper { position: relative; width: 100%; height: 100%; }
+        iframe { width: 100%; height: 100%; border: none; display: none; }
+        
+        /* CAPA INVISIBLE ANTI-FLECHA */
+        #bloqueo-flecha {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
+            height: 60px;  /* Alto suficiente para tapar la barra superior */
+            background: rgba(0,0,0,0); /* Totalmente transparente */
+            z-index: 1000; /* Por encima del iframe */
+            display: none; /* Se activa al terminar la publicidad */
+        }
 
-<!-- HLS -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        #overlay { 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #000; 
+            z-index: 2000; 
+        }
 
-<!-- DASH -->
-<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+        #btn-entrar { 
+            width: 100px;
+            height: 100px;
+            cursor: pointer; 
+            background: #8e44ad; 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background 0.3s;
+            box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
+        }
 
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    background: black;
-    height: 100%;
-    overflow: hidden;
-}
-
-/* CONTENEDOR */
-#player {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    background: black;
-}
-
-/* VIDEO */
-video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: black;
-}
-
-/* CAPA CONTROLES */
-.controls {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    padding: 15px;
-    box-sizing: border-box;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-    opacity: 0;
-    transition: 0.3s;
-}
-
-/* MOSTRAR CONTROLES */
-#player:hover .controls {
-    opacity: 1;
-}
-
-/* BOTONES */
-.btn {
-    color: white;
-    font-size: 18px;
-    cursor: pointer;
-    margin-right: 15px;
-}
-
-/* BARRA */
-.progress {
-    width: 100%;
-    height: 5px;
-    background: rgba(255,255,255,0.3);
-    cursor: pointer;
-    margin-bottom: 10px;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: red;
-}
-
-/* CENTRO PLAY */
-.center-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(1);
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.center-play::before {
-    content: '';
-    margin-left: 5px;
-    border-left: 25px solid white;
-    border-top: 15px solid transparent;
-    border-bottom: 15px solid transparent;
-}
-
-.hidden {
-    display: none;
-}
-</style>
+        #btn-entrar:hover { background: #a55eca; transform: scale(1.1); }
+        .play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
+        #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
+    </style>
 </head>
+<body>
 
-<body oncontextmenu="return false">
-
-<div id="player">
-
-    <video id="video"></video>
-
-    <!-- BOTÓN CENTRAL -->
-    <div id="centerPlay" class="center-play"></div>
-
-    <!-- CONTROLES -->
-    <div class="controls">
-
-        <div class="progress" id="progress">
-            <div class="progress-bar" id="bar"></div>
-        </div>
-
-        <span class="btn" id="playBtn">▶</span>
-        <span class="btn" id="muteBtn">🔊</span>
-        <span class="btn" id="fullscreenBtn">⛶</span>
-
+    <div id="overlay">
+        <button id="btn-entrar">
+            <div class="play-icon"></div>
+        </button>
     </div>
 
-</div>
+    <div id="timer">Publicidad: <span id="seg">21</span>s</div>
+    
+    <div class="video-wrapper">
+        <div id="bloqueo-flecha"></div>
+        <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    </div>
 
-<script>
-const video = document.getElementById("video");
-const playBtn = document.getElementById("playBtn");
-const muteBtn = document.getElementById("muteBtn");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-const centerPlay = document.getElementById("centerPlay");
-const progress = document.getElementById("progress");
-const bar = document.getElementById("bar");
+    <script>
+    const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
+    const videoUrl = params.get('video');
+    const adUrl = params.get('ad');
+    
+    const iframe = document.getElementById('videoFrame');
+    const timerDiv = document.getElementById('timer');
+    const segSpan = document.getElementById('seg');
+    const overlay = document.getElementById('overlay');
+    const bloqueoFlecha = document.getElementById('bloqueo-flecha');
 
-// URL
-const params = new URLSearchParams(window.location.search);
-let url = params.get("video");
-
-// DETECTAR
-function tipo(u) {
-    u = u.toLowerCase();
-    if (u.includes(".m3u8")) return "hls";
-    if (u.includes(".mpd")) return "dash";
-    return "mp4";
-}
-
-// CARGAR
-function cargar(url) {
-
-    const t = tipo(url);
-
-    if (t === "hls") {
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-        } else {
-            video.src = url;
+    document.getElementById('btn-entrar').onclick = () => {
+        overlay.style.display = 'none'; 
+        iframe.style.display = 'block'; 
+        
+        if (videoUrl) {
+            if (adUrl) {
+                let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
+                
+                // Publicidad estricta sin popups
+                iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+                iframe.src = cleanAdUrl;
+                
+                timerDiv.style.display = 'block';
+                let timeLeft = 21; 
+                
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    segSpan.innerText = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        timerDiv.style.display = 'none';
+                        
+                        // Quitamos sandbox para que carguen bien los botones nativos de Drive
+                        iframe.removeAttribute('sandbox');
+                        
+                        // ACTIVAMOS LA CAPA INVISIBLE para tapar la flecha de Drive
+                        bloqueoFlecha.style.display = 'block';
+                        
+                        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                        iframe.src = cleanVideoUrl;
+                    }
+                }, 1000);
+            } else {
+                iframe.removeAttribute('sandbox');
+                bloqueoFlecha.style.display = 'block';
+                let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+                iframe.src = cleanVideoUrl;
+            }
         }
-    }
-
-    else if (t === "dash") {
-        const player = dashjs.MediaPlayer().create();
-        player.initialize(video, url, false);
-    }
-
-    else {
-        video.src = url;
-    }
-}
-
-cargar(url);
-
-// PLAY / PAUSE
-function togglePlay() {
-    if (video.paused) {
-        video.play();
-    } else {
-        video.pause();
-    }
-}
-
-playBtn.onclick = togglePlay;
-centerPlay.onclick = togglePlay;
-video.onclick = togglePlay;
-
-// ICONOS
-video.addEventListener("play", () => {
-    playBtn.textContent = "⏸";
-    centerPlay.classList.add("hidden");
-});
-
-video.addEventListener("pause", () => {
-    playBtn.textContent = "▶";
-    centerPlay.classList.remove("hidden");
-});
-
-// MUTE
-muteBtn.onclick = () => {
-    video.muted = !video.muted;
-    muteBtn.textContent = video.muted ? "🔇" : "🔊";
-};
-
-// FULLSCREEN
-fullscreenBtn.onclick = () => {
-    if (!document.fullscreenElement) {
-        document.getElementById("player").requestFullscreen();
-    } else {
-        document.exitFullscreen();
-    }
-};
-
-// PROGRESO
-video.addEventListener("timeupdate", () => {
-    const percent = (video.currentTime / video.duration) * 100;
-    bar.style.width = percent + "%";
-});
-
-// SEEK
-progress.onclick = (e) => {
-    const rect = progress.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    video.currentTime = pos * video.duration;
-};
-</script>
-
+    };
+    </script>
 </body>
 </html>
