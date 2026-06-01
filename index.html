@@ -1,181 +1,46 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Player Universal PRO</title>
-
-<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet"/>
-<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-http-streaming@3"></script>
-<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-
-<style>
-body {
-    margin: 0;
-    background: #000;
-    height: 100vh;
-}
-
-.player-container {
-    width: 100%;
-    height: 100vh;
-    position: relative;
-}
-
-/* VIDEO / IFRAME FULL */
-.player-container video,
-.player-container iframe {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border: none;
-}
-
-/* BOTÓN CENTRAL */
 #bigPlay {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(128, 0, 255, 0.4);
-    border: 2px solid #bb86fc;
-    padding: 18px 40px;
-    font-size: 22px;
-    color: #fff;
+    transform: translate(-50%, -50%) scale(1);
+    
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+
+    background: rgba(0,0,0,0.4); /* oscuro suave */
+    backdrop-filter: blur(8px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     cursor: pointer;
-    border-radius: 8px;
-    backdrop-filter: blur(6px);
     z-index: 10;
+
+    transition: all 0.3s ease;
 }
 
+/* ICONO TRIÁNGULO */
+#bigPlay::before {
+    content: '';
+    display: block;
+    margin-left: 5px;
+    width: 0;
+    height: 0;
+    border-left: 28px solid white;
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+}
+
+/* HOVER */
 #bigPlay:hover {
-    background: rgba(128, 0, 255, 0.7);
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(0,0,0,0.6);
 }
 
+/* OCULTO */
 .hidden {
-    display: none;
+    opacity: 0;
+    pointer-events: none;
 }
-
-.error-msg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #ff4a4a;
-    text-align: center;
-}
-</style>
-</head>
-
-<body>
-
-<div class="player-container" id="player"></div>
-<div id="bigPlay">▶ PLAY</div>
-
-<script>
-const contenedor = document.getElementById('player');
-const bigPlay = document.getElementById('bigPlay');
-
-const params = new URLSearchParams(window.location.search);
-let url = params.get('video');
-
-if (!url) {
-    contenedor.innerHTML = '<div class="error-msg">No hay video</div>';
-}
-
-/* ===== DETECTOR ===== */
-function tipo(url) {
-    url = url.toLowerCase();
-    if (url.includes('drive.google.com')) return 'drive';
-    if (url.includes('.m3u8')) return 'hls';
-    if (url.includes('.mpd')) return 'dash';
-    if (url.includes('.webm')) return 'webm';
-    if (url.includes('.mp4')) return 'mp4';
-    return 'iframe';
-}
-
-/* ===== DRIVE ===== */
-function drive(url) {
-    if (url.includes('/view')) url = url.replace('/view', '/preview');
-    return url;
-}
-
-/* ===== INICIALIZAR ===== */
-function init() {
-
-    const t = tipo(url);
-
-    if (t === 'drive') {
-        url = drive(url);
-
-        contenedor.innerHTML = `
-            <iframe src="${url}?autoplay=1"
-            allow="autoplay; fullscreen"
-            allowfullscreen></iframe>
-        `;
-
-        bigPlay.classList.add('hidden');
-    }
-
-    else if (t === 'mp4' || t === 'webm') {
-        contenedor.innerHTML = `
-            <video id="vid" controls preload="auto">
-                <source src="${url}" type="video/mp4">
-            </video>
-        `;
-
-        const v = document.getElementById('vid');
-
-        bigPlay.onclick = () => v.play();
-
-        v.onplay = () => bigPlay.classList.add('hidden');
-        v.onpause = () => bigPlay.classList.remove('hidden');
-    }
-
-    else if (t === 'hls') {
-        contenedor.innerHTML = `
-            <video id="vjs" class="video-js" controls></video>
-        `;
-
-        const player = videojs('vjs');
-
-        player.src({
-            src: url,
-            type: 'application/x-mpegURL'
-        });
-
-        bigPlay.onclick = () => player.play();
-
-        player.on('play', () => bigPlay.classList.add('hidden'));
-        player.on('pause', () => bigPlay.classList.remove('hidden'));
-    }
-
-    else if (t === 'dash') {
-        contenedor.innerHTML = `<video id="dashVideo" controls></video>`;
-
-        const video = document.getElementById('dashVideo');
-        const dash = dashjs.MediaPlayer().create();
-
-        dash.initialize(video, url, false);
-
-        bigPlay.onclick = () => video.play();
-
-        video.onplay = () => bigPlay.classList.add('hidden');
-        video.onpause = () => bigPlay.classList.remove('hidden');
-    }
-
-    else {
-        contenedor.innerHTML = `
-            <iframe src="${url}" allow="autoplay; fullscreen"></iframe>
-        `;
-        bigPlay.classList.add('hidden');
-    }
-}
-
-init();
-</script>
-
-</body>
-</html>
