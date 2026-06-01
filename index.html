@@ -56,16 +56,26 @@ video, iframe {
     opacity: 1;
 }
 
-/* BOTONES */
+/* BOTONES OPTIMIZADOS (FUERZA BLANCO Y MORADO NEÓN, ELIMINA NARANJA) */
 .btn {
-    color: white;
+    color: white !important;
     font-size: 18px;
     cursor: pointer;
     margin-right: 15px;
     text-shadow: 0 0 5px rgba(142, 68, 173, 0.8);
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    display: inline-block;
+    user-select: none;
+    transition: color 0.1s ease;
 }
 
-/* BARRA DE PROGRESO CAMBIADA A TU MORADO SELECCIONADO */
+.btn:hover, .btn:focus, .btn:active {
+    color: #bc13fe !important;
+    text-shadow: 0 0 10px #bc13fe;
+}
+
+/* BARRA DE PROGRESO PREMIUM EN MORADO */
 .progress {
     width: 100%;
     height: 6px;
@@ -79,12 +89,12 @@ video, iframe {
 .progress-bar {
     height: 100%;
     width: 0%;
-    background: #8e44ad; /* Color morado guardado en tus preferencias */
-    box-shadow: 0 0 10px #bc13fe; /* Pulso neón morado */
+    background: #8e44ad;
+    box-shadow: 0 0 10px #bc13fe;
     transition: width 0.1s linear;
 }
 
-/* CENTRO PLAY */
+/* CENTRO PLAY PREMIUM */
 .center-play {
     position: absolute;
     top: 50%;
@@ -155,7 +165,7 @@ const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const capaControles = document.getElementById("custom-controls");
 
-// URL
+// URL OBTIENE PARÁMETROS
 const params = new URLSearchParams(window.location.search);
 let url = params.get("video");
 
@@ -169,26 +179,26 @@ function tipo(u) {
     return "mp4";
 }
 
-// CARGAR FUENTE INTELIGENTE
+// CARGAR FUENTE RESPECTANDO TUS CONFIGURACIONES
 function cargar(url) {
     if (!url) return;
     
     const t = tipo(url);
 
     if (t === "drive") {
-        // Ocultar botón central y barra de controles propia porque Google Drive trae los suyos nativos dentro del iframe
+        // Ocultar tus controles personalizados para evitar duplicación de barras
         centerPlay.classList.add("hidden");
         capaControles.classList.add("hidden");
         
-        // Convertir enlaces /view a /preview de forma automática por seguridad
+        // Convertir enlaces /view a /preview de forma automática por estabilidad
         if (url.includes("/view")) {
             url = url.replace("/view", "/preview");
         }
         
-        // Crear iframe e insertarlo reemplazando la etiqueta de video nativa
+        // Crear iframe dejando la URL limpia sin parámetros extras que alteren tu bloqueo del botón
         const iframe = document.createElement("iframe");
-        iframe.src = url + (url.includes("?") ? "&" : "?") + "autoplay=1";
-        iframe.allow = "autoplay; fullscreen";
+        iframe.src = url; 
+        iframe.allow = "fullscreen";
         iframe.setAttribute("allowfullscreen", "true");
         
         video.replaceWith(iframe);
@@ -216,20 +226,26 @@ function cargar(url) {
 
 cargar(url);
 
-// LÓGICA DE PLAY / PAUSE (Solo corre si el video es nativo, no iframe)
-function togglePlay() {
+// LÓGICA DE PLAY / PAUSE MEJORADA (Fija el comportamiento en PC y Móvil)
+function togglePlay(e) {
     if (!video || video.tagName === "IFRAME") return;
+    
     if (video.paused) {
         video.play();
     } else {
         video.pause();
     }
+    
+    // Quita el foco del mouse en PC para evitar congelamientos de color naranja
+    if (e && e.target) {
+        e.target.blur();
+    }
 }
 
 if (video && video.tagName !== "IFRAME") {
-    playBtn.onclick = togglePlay;
-    centerPlay.onclick = togglePlay;
-    video.onclick = togglePlay;
+    playBtn.onclick = (e) => togglePlay(e);
+    centerPlay.onclick = (e) => togglePlay(e);
+    video.onclick = (e) => togglePlay(e);
 
     video.addEventListener("play", () => {
         playBtn.textContent = "⏸";
@@ -258,7 +274,7 @@ if (video && video.tagName !== "IFRAME") {
     };
 }
 
-// FULLSCREEN INTEGRAL (Funciona tanto para video como para el iframe de Drive)
+// FULLSCREEN INTEGRAL (Sirve tanto para video nativo como para iframe de Drive)
 fullscreenBtn.onclick = () => {
     if (!document.fullscreenElement) {
         document.getElementById("player").requestFullscreen().catch(err => {
