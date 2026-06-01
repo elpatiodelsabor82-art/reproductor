@@ -5,39 +5,25 @@
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <style>
-        body { margin: 0; background: #000; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        #mkvPlayer { width: 100%; height: 100%; }
-        .vjs-big-play-button { left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; }
+        .video-js { width: 100% !important; height: 100% !important; }
     </style>
 </head>
 <body>
 
-    <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
+    <video id="myPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const videoUrl = params.get('video');
-
+        
         if (videoUrl) {
-            // Esta es la URL de tu servidor en Render que hace el trabajo de "puente"
-            const urlServidorRender = "https://kikeflix-mkv-server-1.onrender.com/stream?url=";
+            const player = videojs('myPlayer');
             
-            // Construimos la URL completa para el servidor
-            const finalUrl = urlServidorRender + encodeURIComponent(videoUrl);
-
-            var player = videojs('mkvPlayer');
-
-            // Le indicamos que el origen es el servidor de Render, que entrega MP4
-            player.src({ 
-                type: 'video/mp4', 
-                src: finalUrl 
-            });
-
-            player.ready(function() {
-                player.play().catch(e => console.log("Esperando interacción del usuario"));
-            });
-        } else {
-            console.error("No se encontró el parámetro 'video' en la URL");
+            // Cargamos el video directamente sin pasar por ninguna URL externa
+            player.src({ src: videoUrl, type: 'video/mp4' }); // video/mp4 es el estándar, video.js lo ajustará
+            
+            player.play().catch(e => console.log("Se requiere interacción del usuario para reproducir"));
         }
     </script>
 </body>
