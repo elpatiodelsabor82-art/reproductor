@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Player PRO</title>
+<title>Player PRO Custom</title>
 
 <!-- HLS -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -15,152 +15,221 @@
 html, body {
     margin: 0;
     padding: 0;
-    background: #000;
+    background: black;
     height: 100%;
+    overflow: hidden;
 }
 
 /* CONTENEDOR */
-#contenedor {
+#player {
+    position: relative;
     width: 100%;
     height: 100vh;
-    background: #000;
-    overflow: hidden;
+    background: black;
 }
 
-/* VIDEO / IFRAME FULL */
-video, iframe {
+/* VIDEO */
+video {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border: none;
+    background: black;
 }
 
-/* BLOQUEOS BÁSICOS */
-video {
-    -webkit-user-select: none;
-    user-select: none;
+/* CAPA CONTROLES */
+.controls {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    opacity: 0;
+    transition: 0.3s;
 }
 
-/* Quitar botón descarga (Chrome) */
-video::-webkit-media-controls-download-button {
-    display: none !important;
+/* MOSTRAR CONTROLES */
+#player:hover .controls {
+    opacity: 1;
 }
 
-/* Ajustes panel controles */
-video::-webkit-media-controls-enclosure {
-    overflow: hidden;
+/* BOTONES */
+.btn {
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    margin-right: 15px;
 }
 
-video::-webkit-media-controls-panel {
-    width: calc(100% + 30px);
+/* BARRA */
+.progress {
+    width: 100%;
+    height: 5px;
+    background: rgba(255,255,255,0.3);
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: red;
+}
+
+/* CENTRO PLAY */
+.center-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.center-play::before {
+    content: '';
+    margin-left: 5px;
+    border-left: 25px solid white;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+}
+
+.hidden {
+    display: none;
 }
 </style>
 </head>
 
 <body oncontextmenu="return false">
 
-<div id="contenedor"></div>
+<div id="player">
+
+    <video id="video"></video>
+
+    <!-- BOTÓN CENTRAL -->
+    <div id="centerPlay" class="center-play"></div>
+
+    <!-- CONTROLES -->
+    <div class="controls">
+
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="bar"></div>
+        </div>
+
+        <span class="btn" id="playBtn">▶</span>
+        <span class="btn" id="muteBtn">🔊</span>
+        <span class="btn" id="fullscreenBtn">⛶</span>
+
+    </div>
+
+</div>
 
 <script>
-const contenedor = document.getElementById("contenedor");
+const video = document.getElementById("video");
+const playBtn = document.getElementById("playBtn");
+const muteBtn = document.getElementById("muteBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const centerPlay = document.getElementById("centerPlay");
+const progress = document.getElementById("progress");
+const bar = document.getElementById("bar");
 
-// 🔗 URL ?video=
+// URL
 const params = new URLSearchParams(window.location.search);
 let url = params.get("video");
 
-if (!url) {
-    contenedor.innerHTML = "<h2 style='color:white;text-align:center'>No hay video</h2>";
-}
-
-/* DETECTAR TIPO */
+// DETECTAR
 function tipo(u) {
     u = u.toLowerCase();
-
-    if (u.includes("drive.google.com")) return "drive";
     if (u.includes(".m3u8")) return "hls";
     if (u.includes(".mpd")) return "dash";
-    if (u.match(/\.(mp4|webm|ogg)$/)) return "mp4";
-
-    return "iframe";
+    return "mp4";
 }
 
-/* CARGAR VIDEO */
+// CARGAR
 function cargar(url) {
 
     const t = tipo(url);
 
-    // DRIVE
-    if (t === "drive") {
-        const preview = url.replace("/view", "/preview");
-
-        contenedor.innerHTML = `
-            <iframe src="${preview}" allow="autoplay; fullscreen"></iframe>
-        `;
-    }
-
-    // MP4 / WEBM
-    else if (t === "mp4") {
-
-        contenedor.innerHTML = `
-            <video id="video" controls autoplay controlsList="nodownload noplaybackrate">
-                <source src="${url}">
-            </video>
-        `;
-
-        const v = document.getElementById("video");
-
-        v.onclick = () => {
-            if (v.paused) v.play();
-            else v.pause();
-        };
-    }
-
-    // HLS
-    else if (t === "hls") {
-
-        contenedor.innerHTML = `<video id="video" controls autoplay></video>`;
-        const v = document.getElementById("video");
-
+    if (t === "hls") {
         if (Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(url);
-            hls.attachMedia(v);
+            hls.attachMedia(video);
         } else {
-            v.src = url;
+            video.src = url;
         }
-
-        v.onclick = () => {
-            if (v.paused) v.play();
-            else v.pause();
-        };
     }
 
-    // DASH
     else if (t === "dash") {
-
-        contenedor.innerHTML = `<video id="video" controls autoplay></video>`;
-        const v = document.getElementById("video");
-
         const player = dashjs.MediaPlayer().create();
-        player.initialize(v, url, false);
-
-        v.onclick = () => {
-            if (v.paused) v.play();
-            else v.pause();
-        };
+        player.initialize(video, url, false);
     }
 
-    // IFRAME
     else {
-
-        contenedor.innerHTML = `
-            <iframe src="${url}" allow="autoplay; fullscreen"></iframe>
-        `;
+        video.src = url;
     }
 }
 
-// 🚀 INICIAR
 cargar(url);
+
+// PLAY / PAUSE
+function togglePlay() {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+}
+
+playBtn.onclick = togglePlay;
+centerPlay.onclick = togglePlay;
+video.onclick = togglePlay;
+
+// ICONOS
+video.addEventListener("play", () => {
+    playBtn.textContent = "⏸";
+    centerPlay.classList.add("hidden");
+});
+
+video.addEventListener("pause", () => {
+    playBtn.textContent = "▶";
+    centerPlay.classList.remove("hidden");
+});
+
+// MUTE
+muteBtn.onclick = () => {
+    video.muted = !video.muted;
+    muteBtn.textContent = video.muted ? "🔇" : "🔊";
+};
+
+// FULLSCREEN
+fullscreenBtn.onclick = () => {
+    if (!document.fullscreenElement) {
+        document.getElementById("player").requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+};
+
+// PROGRESO
+video.addEventListener("timeupdate", () => {
+    const percent = (video.currentTime / video.duration) * 100;
+    bar.style.width = percent + "%";
+});
+
+// SEEK
+progress.onclick = (e) => {
+    const rect = progress.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    video.currentTime = pos * video.duration;
+};
 </script>
 
 </body>
