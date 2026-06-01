@@ -16,9 +16,10 @@ html, body {
     background: black;
     height: 100%;
     overflow: hidden;
+    font-family: sans-serif;
 }
 
-/* CONTENEDOR */
+/* CONTENEDOR PRINCIPAL */
 #player {
     position: relative;
     width: 100%;
@@ -26,7 +27,16 @@ html, body {
     background: black;
 }
 
-/* VIDEO E IFRAME AUTOMÁTICO */
+/* CONTENEDOR RELATIVO PARA ENLACES EXTERNOS / IFRAMES (TÚ LÓGICA DE BLOQUEO) */
+.video-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
 video, iframe {
     width: 100%;
     height: 100%;
@@ -38,7 +48,19 @@ video, iframe {
     left: 0;
 }
 
-/* CAPA CONTROLES */
+/* CAPA INVISIBLE ANTI-FLECHA INYECTADA */
+#bloqueo-flecha {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
+    height: 60px;  /* Alto suficiente para tapar la barra superior */
+    background: rgba(0,0,0,0); /* Totalmente transparente */
+    z-index: 1000; /* Por encima del iframe */
+    display: none; 
+}
+
+/* CAPA CONTROLES NATIVOS (PARA HLS/DASH/MP4) */
 .controls {
     position: absolute;
     bottom: 0;
@@ -51,12 +73,11 @@ video, iframe {
     z-index: 10;
 }
 
-/* MOSTRAR CONTROLES */
 #player:hover .controls {
     opacity: 1;
 }
 
-/* BOTONES OPTIMIZADOS (FUERZA BLANCO Y MORADO NEÓN, ELIMINA NARANJA) */
+/* BOTONES PREMIUM (FUERZA BLANCO Y MORADO NEÓN) */
 .btn {
     color: white !important;
     font-size: 18px;
@@ -75,7 +96,7 @@ video, iframe {
     text-shadow: 0 0 10px #bc13fe;
 }
 
-/* BARRA DE PROGRESO PREMIUM EN MORADO */
+/* BARRA DE PROGRESO EN MORADO */
 .progress {
     width: 100%;
     height: 6px;
@@ -94,7 +115,7 @@ video, iframe {
     transition: width 0.1s linear;
 }
 
-/* CENTRO PLAY PREMIUM */
+/* CENTRO PLAY NATIVO */
 .center-play {
     position: absolute;
     top: 50%;
@@ -112,6 +133,7 @@ video, iframe {
     transition: 0.3s;
     z-index: 5;
     box-shadow: 0 0 20px rgba(188, 19, 254, 0.4);
+    display: none; /* Se activa dinámicamente si es video directo */
 }
 
 .center-play::before {
@@ -127,6 +149,49 @@ video, iframe {
     transform: translate(-50%, -50%) scale(1.1);
 }
 
+/* OVERLAY INICIAL DE ENTRADA */
+#overlay { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    background: #000; 
+    z-index: 2000; 
+}
+
+#btn-entrar { 
+    width: 100px;
+    height: 100px;
+    cursor: pointer; 
+    background: #8e44ad; 
+    color: white; 
+    border: none; 
+    border-radius: 50%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s, background 0.3s;
+    box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
+}
+
+#btn-entrar:hover { background: #a55eca; transform: scale(1.1); }
+.play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
+
+/* TIMER PUBLICIDAD */
+#timer { 
+    position: absolute; 
+    top: 20px; 
+    right: 20px; 
+    background: rgba(0,0,0,0.8); 
+    color: white; 
+    padding: 10px; 
+    border-radius: 5px; 
+    z-index: 2010; 
+    display: none; 
+}
+
 .hidden {
     display: none !important;
 }
@@ -137,20 +202,30 @@ video, iframe {
 
 <div id="player">
 
-    <video id="video"></video>
+    <div id="overlay">
+        <button id="btn-entrar">
+            <div class="play-icon"></div>
+        </button>
+    </div>
+
+    <div id="timer">Publicidad: <span id="seg">21</span>s</div>
+
+    <div class="video-wrapper" id="wrapper-externo">
+        <div id="bloqueo-flecha"></div>
+        <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
+    </div>
+
+    <video id="video" style="display: none;"></video>
 
     <div id="centerPlay" class="center-play"></div>
 
-    <div class="controls" id="custom-controls">
-
+    <div class="controls" id="custom-controls" style="display: none;">
         <div class="progress" id="progress">
             <div class="progress-bar" id="bar"></div>
         </div>
-
         <span class="btn" id="playBtn">▶</span>
         <span class="btn" id="muteBtn">🔊</span>
         <span class="btn" id="fullscreenBtn">⛶</span>
-
     </div>
 
 </div>
@@ -165,11 +240,20 @@ const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const capaControles = document.getElementById("custom-controls");
 
-// URL OBTIENE PARÁMETROS
-const params = new URLSearchParams(window.location.search);
-let url = params.get("video");
+// Elementos de tu sistema de bloqueo e iframe
+const wrapperExterno = document.getElementById('wrapper-externo');
+const iframe = document.getElementById('videoFrame');
+const timerDiv = document.getElementById('timer');
+const segSpan = document.getElementById('seg');
+const overlay = document.getElementById('overlay');
+const bloqueoFlecha = document.getElementById('bloqueo-flecha');
 
-// DETECTAR TIPO DE FLUJO
+// Capturar parámetros
+const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
+let videoUrl = params.get("video");
+let adUrl = params.get("ad");
+
+// Detectar flujo
 function tipo(u) {
     if (!u) return "vacio";
     u = u.toLowerCase();
@@ -179,56 +263,92 @@ function tipo(u) {
     return "mp4";
 }
 
-// CARGAR FUENTE RESPECTANDO TUS CONFIGURACIONES
-function cargar(url) {
-    if (!url) return;
-    
-    const t = tipo(url);
+const tipoContenido = tipo(videoUrl);
 
-    if (t === "drive") {
-        // Ocultar tus controles personalizados para evitar duplicación de barras
-        centerPlay.classList.add("hidden");
-        capaControles.classList.add("hidden");
+// AL DAR CLIC EN ENTRAR (Tu arquitectura exacta)
+document.getElementById('btn-entrar').onclick = () => {
+    overlay.style.display = 'none'; 
+
+    if (!videoUrl) return;
+
+    // Caso A: Si trae Publicidad
+    if (adUrl) {
+        wrapperExterno.style.display = 'block';
+        let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
         
-        // Convertir enlaces /view a /preview de forma automática por estabilidad
-        if (url.includes("/view")) {
-            url = url.replace("/view", "/preview");
-        }
+        // Modo sandbox estricto para anuncios
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+        iframe.src = cleanAdUrl;
         
-        // Crear iframe dejando la URL limpia sin parámetros extras que alteren tu bloqueo del botón
-        const iframe = document.createElement("iframe");
-        iframe.src = url; 
-        iframe.allow = "fullscreen";
-        iframe.setAttribute("allowfullscreen", "true");
+        timerDiv.style.display = 'block';
+        let timeLeft = 21; 
         
-        video.replaceWith(iframe);
+        const countdown = setInterval(() => {
+            timeLeft--;
+            segSpan.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerDiv.style.display = 'none';
+                
+                // Fin publicidad: cargar contenido real
+                ejecutarContenidoReal();
+            }
+        }, 1000);
     } 
-    
-    else if (t === "hls") {
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-        } else {
-            video.src = url;
-        }
-    }
-
-    else if (t === "dash") {
-        const player = dashjs.MediaPlayer().create();
-        player.initialize(video, url, false);
-    }
-
+    // Caso B: Carga directa sin publicidad
     else {
-        video.src = url;
+        ejecutarContenidoReal();
+    }
+};
+
+// FUNCIÓN PARA PROCESAR EL CONTENIDO REAL (Combina tus bloqueos e inyecciones nativas)
+function ejecutarContenidoReal() {
+    // Si es Google Drive
+    if (tipoContenido === "drive") {
+        wrapperExterno.style.display = 'block';
+        iframe.removeAttribute('sandbox');
+        
+        // Bloqueo físico de flecha activado sobre el wrapper relativo
+        bloqueoFlecha.style.display = 'block';
+        
+        if (videoUrl.includes("/view")) {
+            videoUrl = videoUrl.replace("/view", "/preview");
+        }
+        
+        // Dejar URL limpia como te gusta para que conserve la inhabilitación del botón
+        iframe.src = videoUrl;
+    } 
+    // Si son flujos de video directos (HLS, DASH, MP4)
+    else {
+        wrapperExterno.style.display = 'none'; // Apaga el iframe wrapper
+        video.style.display = 'block';          // Enciende la etiqueta video nativa
+        centerPlay.style.display = 'flex';       // Muestra tu botón de play redondo
+        capaControles.style.display = 'block';   // Muestra tus barras moradas
+        
+        if (tipoContenido === "hls") {
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(videoUrl);
+                hls.attachMedia(video);
+            } else {
+                video.src = videoUrl;
+            }
+        }
+        else if (tipoContenido === "dash") {
+            const player = dashjs.MediaPlayer().create();
+            player.initialize(video, videoUrl, false);
+        }
+        else {
+            video.src = videoUrl;
+        }
+        
+        video.play();
     }
 }
 
-cargar(url);
-
-// LÓGICA DE PLAY / PAUSE MEJORADA (Fija el comportamiento en PC y Móvil)
+// LÓGICA DE PLAY / PAUSE (Solo corre para la etiqueta de video nativa)
 function togglePlay(e) {
-    if (!video || video.tagName === "IFRAME") return;
+    if (!video || video.style.display === "none") return;
     
     if (video.paused) {
         video.play();
@@ -236,13 +356,12 @@ function togglePlay(e) {
         video.pause();
     }
     
-    // Quita el foco del mouse en PC para evitar congelamientos de color naranja
     if (e && e.target) {
         e.target.blur();
     }
 }
 
-if (video && video.tagName !== "IFRAME") {
+if (video) {
     playBtn.onclick = (e) => togglePlay(e);
     centerPlay.onclick = (e) => togglePlay(e);
     video.onclick = (e) => togglePlay(e);
@@ -274,11 +393,12 @@ if (video && video.tagName !== "IFRAME") {
     };
 }
 
-// FULLSCREEN INTEGRAL (Sirve tanto para video nativo como para iframe de Drive)
+// FULLSCREEN TOTAL (Afecta a todo el cuadro del reproductor, sea iframe o video nativo)
 fullscreenBtn.onclick = () => {
+    const elPlayer = document.getElementById("player");
     if (!document.fullscreenElement) {
-        document.getElementById("player").requestFullscreen().catch(err => {
-            console.log("Error al activar pantalla completa: ", err);
+        elPlayer.requestFullscreen().catch(err => {
+            console.log("Error pantalla completa: ", err);
         });
     } else {
         document.exitFullscreen();
