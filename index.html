@@ -1,152 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor Premium - Protocolo Candela</title>
+    <style>
+        /* Estilos base con la estética neón y oscura */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0a0b10;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
 
-<title>Player PRO</title>
+        .player-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
-<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet"/>
-<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+        /* El contenedor que mantiene la proporción de aspecto 16:9 de la pantalla */
+        .video-box {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* Proporción 16:9 */
+            height: 0;
+            background-color: #000;
+            border: 3px solid #bc13fe; /* Borde Morado Neón */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(188, 19, 254, 0.3);
+        }
 
-<!-- HLS + DASH soporte -->
-<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-http-streaming@3"></script>
-<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+        /* Ajuste estricto para que el iframe o video ocupe todo el cuadro */
+        .video-box iframe, .video-box video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
 
-<style>
-body {
-    margin: 0;
-    background: #000;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* PLAYER */
-.video-js {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-/* CONTROLES MORADOS */
-.vjs-control-bar {
-    background: rgba(40, 0, 60, 0.8) !important;
-}
-
-.vjs-play-control,
-.vjs-volume-panel,
-.vjs-fullscreen-control,
-.vjs-progress-control {
-    color: #bb86fc !important;
-}
-
-.vjs-play-progress {
-    background-color: #bb86fc !important;
-}
-
-.vjs-volume-level {
-    background-color: #bb86fc !important;
-}
-
-/* BOTÓN CENTRAL PERSONALIZADO */
-#bigPlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(128, 0, 255, 0.4);
-    border: 2px solid #bb86fc;
-    padding: 20px 40px;
-    font-size: 24px;
-    color: #fff;
-    cursor: pointer;
-    border-radius: 8px;
-    backdrop-filter: blur(5px);
-    z-index: 10;
-}
-
-#bigPlay:hover {
-    background: rgba(128, 0, 255, 0.7);
-}
-
-/* OCULTAR CUANDO REPRODUCE */
-.hidden {
-    display: none;
-}
-</style>
+        .error-msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4a4a;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1rem;
+            text-shadow: 0 0 10px rgba(255, 74, 74, 0.5);
+        }
+    </style>
 </head>
-
 <body>
 
-<video id="player-pro" class="video-js vjs-default-skin" controls preload="auto"></video>
-
-<div id="bigPlay">▶ PLAY</div>
+<div class="player-container">
+    <div class="video-box" id="player-canvas">
+        <!-- Aquí el script inyectará dinámicamente el reproductor -->
+        <div class="error-msg">Cargando transmisión...</div>
+    </div>
+</div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-let url = params.get('video');
+    function inicializarReproductor() {
+        const contenedor = document.getElementById('player-canvas');
+        
+        // 1. Obtener los parámetros de la URL actual
+        const parametrosURL = new URLSearchParams(window.location.search);
+        let urlVideo = parametrosURL.get('video');
 
-const player = videojs('player-pro');
-const bigPlay = document.getElementById('bigPlay');
+        // Verificar si se pasó el parámetro 'video'
+        if (!urlVideo) {
+            contenedor.innerHTML = '<div class="error-msg">⚠️ Error: No se detectó ninguna señal de video en la URL.</div>';
+            return;
+        }
 
-function detectarTipo(url) {
-    if (!url) return null;
+        // Decodificar la URL por si viene con caracteres protegidos
+        urlVideo = decodeURIComponent(urlVideo);
 
-    if (url.includes('.m3u8')) return 'application/x-mpegURL';
-    if (url.includes('.mpd')) return 'application/dash+xml';
-    if (url.includes('.webm')) return 'video/webm';
-    if (url.includes('.mkv')) return 'video/mp4'; // fallback
-    if (url.includes('drive.google.com')) return 'video/mp4';
-
-    return 'video/mp4';
-}
-
-function arreglarDrive(url) {
-    if (!url.includes('drive.google.com')) return url;
-
-    let match = url.match(/\/d\/(.*?)\//);
-    if (match && match[1]) {
-        return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        // 2. Procesamiento inteligente si el enlace es de Google Drive
+        if (urlVideo.includes('drive.google.com')) {
+            
+            // Si el enlace viene como /view o /preview, aseguramos que use /preview para que cargue el reproductor nativo de Drive sin trabas
+            if (urlVideo.includes('/view')) {
+                urlVideo = urlVideo.replace('/view', '/preview');
+            }
+            
+            // Inyectamos el iframe optimizado para Drive con autoplay activado
+            contenedor.innerHTML = `
+                <iframe 
+                    src="${urlVideo}${urlVideo.includes('?') ? '&' : '?'}autoplay=1" 
+                    allow="autoplay; fullscreen" 
+                    allowfullscreen>
+                </iframe>
+            `;
+            
+        } else if (urlVideo.toLowerCase().includes('.mp4') || urlVideo.toLowerCase().includes('.m3u8')) {
+            // 3. Si es un enlace directo a archivo de video físico (.mp4 o streaming directo)
+            contenedor.innerHTML = `
+                <video controls autoplay playsinline style="width:100%; height:100%;">
+                    <source src="${urlVideo}" type="video/mp4">
+                    Tu navegador no soporta reproducción directa.
+                </video>
+            `;
+        } else {
+            // 4. Cualquier otra URL externa (Embeds de terceros, YouTube, etc.)
+            const urlFinal = urlVideo.includes('?') ? urlVideo + '&autoplay=1' : urlVideo + '?autoplay=1';
+            contenedor.innerHTML = `
+                <iframe 
+                    src="${urlFinal}" 
+                    allow="autoplay; fullscreen" 
+                    allowfullscreen>
+                </iframe>
+            `;
+        }
     }
 
-    return url;
-}
-
-if (url) {
-    url = arreglarDrive(url);
-
-    const type = detectarTipo(url);
-
-    player.src({
-        src: url,
-        type: type
-    });
-
-    player.ready(() => {
-        player.pause();
-    });
-} else {
-    alert("No se recibió URL de video");
-}
-
-/* BOTÓN CENTRAL */
-bigPlay.addEventListener('click', () => {
-    player.play();
-});
-
-player.on('play', () => {
-    bigPlay.classList.add('hidden');
-});
-
-player.on('pause', () => {
-    bigPlay.classList.remove('hidden');
-});
-
-player.on('error', () => {
-    console.log("Error cargando video");
-});
+    // Ejecutar la función apenas cargue la página
+    window.onload = inicializarReproductor;
 </script>
 
 </body>
