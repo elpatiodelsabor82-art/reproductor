@@ -27,7 +27,7 @@ html, body {
     background: black;
 }
 
-/* CONTENEDOR RELATIVO PARA ENLACES EXTERNOS / IFRAMES (TÚ LÓGICA DE BLOQUEO) */
+/* CONTENEDOR RELATIVO PARA ENLACES EXTERNOS / IFRAMES */
 .video-wrapper {
     position: absolute;
     top: 0;
@@ -48,19 +48,19 @@ video, iframe {
     left: 0;
 }
 
-/* CAPA INVISIBLE ANTI-FLECHA INYECTADA */
+/* CAPA INVISIBLE ANTI-FLECHA */
 #bloqueo-flecha {
     position: absolute;
     top: 0;
     right: 0;
-    width: 180px;  /* Ancho suficiente para tapar la flecha y el logo de Drive */
-    height: 60px;  /* Alto suficiente para tapar la barra superior */
-    background: rgba(0,0,0,0); /* Totalmente transparente */
-    z-index: 1000; /* Por encima del iframe */
+    width: 180px;  
+    height: 60px;  
+    background: rgba(0,0,0,0); 
+    z-index: 1000; 
     display: none; 
 }
 
-/* CAPA CONTROLES NATIVOS (PARA HLS/DASH/MP4) */
+/* CAPA CONTROLES NATIVOS */
 .controls {
     position: absolute;
     bottom: 0;
@@ -77,7 +77,7 @@ video, iframe {
     opacity: 1;
 }
 
-/* BOTONES PREMIUM (FUERZA BLANCO Y MORADO NEÓN) */
+/* BOTONES PREMIUM */
 .btn {
     color: white !important;
     font-size: 18px;
@@ -96,7 +96,7 @@ video, iframe {
     text-shadow: 0 0 10px #bc13fe;
 }
 
-/* BARRA DE PROGRESO EN MORADO */
+/* BARRA DE PROGRESO */
 .progress {
     width: 100%;
     height: 6px;
@@ -133,7 +133,7 @@ video, iframe {
     transition: 0.3s;
     z-index: 5;
     box-shadow: 0 0 20px rgba(188, 19, 254, 0.4);
-    display: none; /* Se activa dinámicamente si es video directo */
+    display: none; 
 }
 
 .center-play::before {
@@ -240,7 +240,7 @@ const progress = document.getElementById("progress");
 const bar = document.getElementById("bar");
 const capaControles = document.getElementById("custom-controls");
 
-// Elementos de tu sistema de bloqueo e iframe
+// Elementos de bloqueo e iframe
 const wrapperExterno = document.getElementById('wrapper-externo');
 const iframe = document.getElementById('videoFrame');
 const timerDiv = document.getElementById('timer');
@@ -248,7 +248,7 @@ const segSpan = document.getElementById('seg');
 const overlay = document.getElementById('overlay');
 const bloqueoFlecha = document.getElementById('bloqueo-flecha');
 
-// Capturar parámetros
+// Capturar parámetros URL
 const params = new URLSearchParams(window.location.search + window.location.hash.replace('#', '&'));
 let videoUrl = params.get("video");
 let adUrl = params.get("ad");
@@ -265,18 +265,16 @@ function tipo(u) {
 
 const tipoContenido = tipo(videoUrl);
 
-// AL DAR CLIC EN ENTRAR (Tu arquitectura exacta)
+// AL DAR CLIC EN ENTRAR
 document.getElementById('btn-entrar').onclick = () => {
     overlay.style.display = 'none'; 
 
     if (!videoUrl) return;
 
-    // Caso A: Si trae Publicidad
     if (adUrl) {
         wrapperExterno.style.display = 'block';
         let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
         
-        // Modo sandbox estricto para anuncios
         iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
         iframe.src = cleanAdUrl;
         
@@ -289,41 +287,39 @@ document.getElementById('btn-entrar').onclick = () => {
             if (timeLeft <= 0) {
                 clearInterval(countdown);
                 timerDiv.style.display = 'none';
-                
-                // Fin publicidad: cargar contenido real
                 ejecutarContenidoReal();
             }
         }, 1000);
-    } 
-    // Caso B: Carga directa sin publicidad
-    else {
+    } else {
         ejecutarContenidoReal();
     }
 };
 
-// FUNCIÓN PARA PROCESAR EL CONTENIDO REAL (Combina tus bloqueos e inyecciones nativas)
+// FUNCIÓN PARA PROCESAR EL CONTENIDO REAL (CORREGIDA CON AUTOPLAY SEGURO)
 function ejecutarContenidoReal() {
-    // Si es Google Drive
     if (tipoContenido === "drive") {
         wrapperExterno.style.display = 'block';
         iframe.removeAttribute('sandbox');
         
-        // Bloqueo físico de flecha activado sobre el wrapper relativo
+        // Activa la capa que tapa la flecha de Drive
         bloqueoFlecha.style.display = 'block';
         
         if (videoUrl.includes("/view")) {
             videoUrl = videoUrl.replace("/view", "/preview");
         }
         
-        // Dejar URL limpia como te gusta para que conserve la inhabilitación del botón
-        iframe.src = videoUrl;
+        // ASIGNACIÓN INTELIGENTE DE AUTOPLAY:
+        // Si el enlace ya viene con un "?" (ej. parámetros de permisos), añadimos "&autoplay=1".
+        // Si viene limpio, añadimos "?autoplay=1". Así Google arranca directo sin pedir el play gris.
+        let urlConAutoplay = videoUrl + (videoUrl.includes("?") ? "&" : "?") + "autoplay=1";
+        
+        iframe.src = urlConAutoplay;
     } 
-    // Si son flujos de video directos (HLS, DASH, MP4)
     else {
-        wrapperExterno.style.display = 'none'; // Apaga el iframe wrapper
-        video.style.display = 'block';          // Enciende la etiqueta video nativa
-        centerPlay.style.display = 'flex';       // Muestra tu botón de play redondo
-        capaControles.style.display = 'block';   // Muestra tus barras moradas
+        wrapperExterno.style.display = 'none'; 
+        video.style.display = 'block';          
+        centerPlay.style.display = 'flex';       
+        capaControles.style.display = 'block';   
         
         if (tipoContenido === "hls") {
             if (Hls.isSupported()) {
@@ -346,7 +342,6 @@ function ejecutarContenidoReal() {
     }
 }
 
-// LÓGICA DE PLAY / PAUSE (Solo corre para la etiqueta de video nativa)
 function togglePlay(e) {
     if (!video || video.style.display === "none") return;
     
@@ -393,7 +388,6 @@ if (video) {
     };
 }
 
-// FULLSCREEN TOTAL (Afecta a todo el cuadro del reproductor, sea iframe o video nativo)
 fullscreenBtn.onclick = () => {
     const elPlayer = document.getElementById("player");
     if (!document.fullscreenElement) {
