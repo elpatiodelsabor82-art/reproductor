@@ -4,44 +4,159 @@
     <meta charset="UTF-8">
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        
         .video-wrapper { position: relative; width: 100%; height: 100%; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
+        
         .video-js-container { position: relative; width: 100%; height: 100%; display: none; }
+        
         .video-js { width: 100% !important; height: 100% !important; }
         
-        /* Estilos del reproductor (mantenidos) */
-        .video-js .vjs-big-play-button { background-color: #8e44ad !important; color: #ffffff !important; border: none !important; border-radius: 50% !important; width: 90px !important; height: 90px !important; line-height: 90px !important; margin-top: -45px !important; margin-left: -45px !important; box-shadow: 0 0 30px rgba(142, 68, 173, 0.8) !important; font-size: 3.5em !important; }
-        .video-js .vjs-control-bar { background-color: rgba(15, 15, 15, 0.9) !important; height: 50px !important; }
-        .video-js .vjs-control:before, .video-js .vjs-button > .vjs-icon-placeholder:before { color: #8e44ad !important; line-height: 50px !important; }
-        .video-js .vjs-play-progress { background-color: #8e44ad !important; }
-        .video-js .vjs-volume-level { background-color: #8e44ad !important; }
+        .video-js .vjs-big-play-button {
+            background-color: #8e44ad !important; 
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 50% !important; 
+            width: 90px !important;
+            height: 90px !important;
+            line-height: 90px !important;
+            margin-top: -45px !important; 
+            margin-left: -45px !important;
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.8) !important; 
+            transition: transform 0.3s ease, background-color 0.3s ease !important;
+            font-size: 3.5em !important;
+        }
+        .video-js:hover .vjs-big-play-button {
+            background-color: #a55eca !important; 
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 40px rgba(165, 94, 202, 0.9) !important;
+        }
 
-        .reproductor-logo { position: absolute; top: 20px; right: 20px; width: 100px; z-index: 10; pointer-events: none; opacity: 0.8; }
-        #bloqueo-flecha { position: absolute; top: 0; right: 0; width: 180px; height: 60px; z-index: 1000; display: none; }
-        #overlay { position: absolute; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000; z-index: 2000; }
-        #btn-entrar { width: 100px; height: 100px; cursor: pointer; background: #8e44ad; color: white; border: none; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; box-shadow: 0 0 20px rgba(142, 68, 173, 0.6); }
-        #btn-entrar:hover { transform: scale(1.1); }
+        .video-js .vjs-control-bar {
+            background-color: rgba(15, 15, 15, 0.9) !important; 
+            height: 50px !important;
+        }
+        
+        .video-js .vjs-control:before, 
+        .video-js .vjs-button > .vjs-icon-placeholder:before {
+            color: #8e44ad !important;
+            line-height: 50px !important;
+            transition: color 0.2s ease;
+        }
+        
+        .video-js .vjs-control:hover:before,
+        .video-js .vjs-button:hover > .vjs-icon-placeholder:before {
+            color: #a55eca !important;
+        }
+
+        .video-js .vjs-play-progress {
+            background-color: #8e44ad !important; 
+        }
+        .video-js .vjs-play-progress:before {
+            color: #ffffff !important;
+            font-size: 1.3em !important;
+            top: -3px !important;
+        }
+        .video-js .vjs-volume-level {
+            background-color: #8e44ad !important; 
+        }
+
+        .video-js .vjs-time-control {
+            color: #ffffff !important;
+            line-height: 50px !important;
+        }
+
+        .reproductor-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 100px;
+            height: auto;
+            z-index: 10; 
+            pointer-events: none; 
+            opacity: 0.8; 
+            transition: opacity 0.4s ease, width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .reproductor-logo {
+                width: 55px; 
+                top: 12px;   
+                right: 12px;
+                opacity: 0.7; 
+            }
+        }
+
+        .vjs-user-inactive .reproductor-logo {
+            opacity: 0;
+        }
+
+        #bloqueo-flecha {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 180px;  
+            height: 60px;  
+            background: rgba(0,0,0,0); 
+            z-index: 1000; 
+            display: none; 
+        }
+
+        #overlay { 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #000; 
+            z-index: 2000; 
+        }
+
+        #btn-entrar { 
+            width: 100px;
+            height: 100px;
+            cursor: pointer; 
+            background: #8e44ad; 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background 0.3s;
+            box-shadow: 0 0 20px rgba(142, 68, 173, 0.6);
+        }
+
+        #btn-entrar:hover { background: #a55eca; transform: scale(1.1); }
         .play-icon { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 35px solid white; margin-left: 8px; }
         #timer { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 2010; display: none; }
     </style>
 
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/6.3.0/mux.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
 </head>
 <body>
 
     <div id="overlay">
-        <button id="btn-entrar"><div class="play-icon"></div></button>
+        <button id="btn-entrar">
+            <div class="play-icon"></div>
+        </button>
     </div>
 
     <div id="timer">Publicidad: <span id="seg">21</span>s</div>
     
     <div class="video-wrapper">
         <div id="bloqueo-flecha"></div>
+        
         <iframe id="videoFrame" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
         
         <div id="mkvContainer" class="video-js-container">
-            <img class="reproductor-logo" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEil2dds7gIHlc-jR_PV41bR6HiwYzt4n7ciZhiP8KlTlWXXIyZrrYzCYP1UwpK-bLTm6eI4Rpvhvaq3Z-7l5qIyR-BuJnDIi_SjWJ2dWcWS31q7zCws74ta2IAa10-ohsOXV44ts5rekRSCpfjoDAAgJcpXnFo2VXljQ2lswxjM6CkdJI1nGq_cqmuGbBg/s1600/logo300px.png">
+            
+            <img class="reproductor-logo" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEil2dds7gIHlc-jR_PV41bR6HiwYzt4n7ciZhiP8KlTlWXXIyZrrYzCYP1UwpK-bLTm6eI4Rpvhvaq3Z-7l5qIyR-BuJnDIi_SjWJ2dWcWS31q7zCws74ta2IAa10-ohsOXV44ts5rekRSCpfjoDAAgJcpXnFo2VXljQ2lswxjM6CkdJI1nGq_cqmuGbBg/s1600/logo300px.png" alt="Protocolo Candela">
+            
             <video id="mkvPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls disablePictureInPicture controlsList="nodownload nopictureinpicture" preload="auto"></video>
         </div>
     </div>
@@ -56,42 +171,67 @@
     const timerDiv = document.getElementById('timer');
     const segSpan = document.getElementById('seg');
     const overlay = document.getElementById('overlay');
+    const bloqueoFlecha = document.getElementById('bloqueo-flecha');
 
     function reproducirVideoFinal() {
-        if (videoUrl) {
+        let cleanVideoUrl = videoUrl.includes('?') ? videoUrl + '&autoplay=1' : videoUrl + '?autoplay=1';
+
+        if (videoUrl && videoUrl.includes('.mkv')) {
             iframe.style.display = 'none';
             mkvContainer.style.display = 'block';
 
-            // AQUÍ SE ELIMINÓ LA CONEXIÓN A RENDER
-            var player = videojs('mkvPlayer', { fill: true });
-            
-            // Intentamos cargar el video directamente desde la fuente original
-            player.src({ type: 'video/mp4', src: videoUrl });
+            const urlServidorRender = "https://kikeflix-mkv-server-1.onrender.com/stream?url=";
+            const videoModificadoConAudio = urlServidorRender + encodeURIComponent(videoUrl);
+
+            var player = videojs('mkvPlayer', {
+                fill: true,
+                controlBar: {
+                    pictureInPictureToggle: false 
+                }
+            });
+
+            player.src({ type: 'video/mp4', src: videoModificadoConAudio });
             
             player.ready(() => {
-                player.play().catch(e => console.log("Error:", e));
+                player.volume(1.0);
+                player.play().catch(function(error) {
+                    console.log("Error al reproducir: ", error);
+                });
             });
+
+        } else {
+            iframe.removeAttribute('sandbox');
+            bloqueoFlecha.style.display = 'block';
+            iframe.src = cleanVideoUrl;
         }
     }
 
     document.getElementById('btn-entrar').onclick = () => {
         overlay.style.display = 'none'; 
-        if (adUrl) {
-            iframe.style.display = 'block';
-            iframe.src = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
-            timerDiv.style.display = 'block';
-            let timeLeft = 21; 
-            const countdown = setInterval(() => {
-                timeLeft--;
-                segSpan.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(countdown);
-                    timerDiv.style.display = 'none';
-                    reproducirVideoFinal();
-                }
-            }, 1000);
-        } else {
-            reproducirVideoFinal();
+        iframe.style.display = 'block'; 
+        
+        if (videoUrl) {
+            if (adUrl) {
+                let cleanAdUrl = adUrl.includes('?') ? adUrl + '&autoplay=1' : adUrl + '?autoplay=1';
+                
+                iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin');
+                iframe.src = cleanAdUrl;
+                
+                timerDiv.style.display = 'block';
+                let timeLeft = 21; 
+                
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    segSpan.innerText = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        timerDiv.style.display = 'none';
+                        reproducirVideoFinal();
+                    }
+                }, 1000);
+            } else {
+                reproducirVideoFinal();
+            }
         }
     };
     </script>
