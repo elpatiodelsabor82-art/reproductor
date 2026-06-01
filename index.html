@@ -48,7 +48,7 @@ video, iframe {
     left: 0;
 }
 
-/* CAPA INVISIBLE ANTI-FLECHA */
+/* CAPA INVISIBLE ANTI-FLECHA (PARA DRIVE) */
 #bloqueo-flecha {
     position: absolute;
     top: 0;
@@ -60,7 +60,7 @@ video, iframe {
     display: none; 
 }
 
-/* CAPA CONTROLES NATIVOS */
+/* CAPA CONTROLES NATIVOS (HLS/DASH/MP4) */
 .controls {
     position: absolute;
     bottom: 0;
@@ -253,14 +253,15 @@ const params = new URLSearchParams(window.location.search + window.location.hash
 let videoUrl = params.get("video");
 let adUrl = params.get("ad");
 
-// Detectar flujo
+// DETECTAR FLUJO INTELIGENTE ACTUALIZADO
 function tipo(u) {
     if (!u) return "vacio";
     u = u.toLowerCase();
     if (u.includes("drive.google.com")) return "drive";
     if (u.includes(".m3u8")) return "hls";
     if (u.includes(".mpd")) return "dash";
-    return "mp4";
+    if (u.includes(".mp4")) return "mp4";
+    return "embed"; // Cualquier otra URL (como vidplay, youtube, moshahda, etc.) se tratará como Embed protegido
 }
 
 const tipoContenido = tipo(videoUrl);
@@ -295,26 +296,35 @@ document.getElementById('btn-entrar').onclick = () => {
     }
 };
 
-// FUNCIÓN PARA PROCESAR EL CONTENIDO REAL (CORREGIDA CON AUTOPLAY SEGURO)
+// FUNCIÓN DE PROCESAMIENTO INTEGRAL (SOPORTA DRIVE, DIRECTOS Y EMBEDS CON ESCUDO ANTI-VIRUS)
 function ejecutarContenidoReal() {
+    
+    // CASO 1: GOOGLE DRIVE
     if (tipoContenido === "drive") {
         wrapperExterno.style.display = 'block';
-        iframe.removeAttribute('sandbox');
-        
-        // Activa la capa que tapa la flecha de Drive
-        bloqueoFlecha.style.display = 'block';
+        iframe.removeAttribute('sandbox'); // Drive necesita permisos libres para sus botones internos
+        bloqueoFlecha.style.display = 'block'; // Capa anti-flecha encima
         
         if (videoUrl.includes("/view")) {
             videoUrl = videoUrl.replace("/view", "/preview");
         }
-        
-        // ASIGNACIÓN INTELIGENTE DE AUTOPLAY:
-        // Si el enlace ya viene con un "?" (ej. parámetros de permisos), añadimos "&autoplay=1".
-        // Si viene limpio, añadimos "?autoplay=1". Así Google arranca directo sin pedir el play gris.
         let urlConAutoplay = videoUrl + (videoUrl.includes("?") ? "&" : "?") + "autoplay=1";
-        
         iframe.src = urlConAutoplay;
     } 
+    
+    // CASO 2: EMBEDS EXTERNOS (VidPlay, servidores de películas, etc.)
+    else if (tipoContenido === "embed") {
+        wrapperExterno.style.display = 'block';
+        bloqueoFlecha.style.display = 'none'; // No se necesita bloquear flecha de Drive aquí
+        
+        // ESCUDO ANTI-POPUPS: Le permitimos ejecutar los scripts del video pero le PROHIBIMOS abrir nuevas pestañas o ventanas de virus
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin'); 
+        
+        let urlConAutoplay = videoUrl + (videoUrl.includes("?") ? "&" : "?") + "autoplay=1";
+        iframe.src = urlConAutoplay;
+    }
+    
+    // CASO 3: STREAMING O VIDEOS DIRECTOS (HLS, DASH, MP4)
     else {
         wrapperExterno.style.display = 'none'; 
         video.style.display = 'block';          
@@ -342,6 +352,7 @@ function ejecutarContenidoReal() {
     }
 }
 
+// LÓGICA DE CONTROLES NATIVOS (Solo para streaming directo)
 function togglePlay(e) {
     if (!video || video.style.display === "none") return;
     
@@ -388,6 +399,7 @@ if (video) {
     };
 }
 
+// FULLSCREEN INTEGRAL
 fullscreenBtn.onclick = () => {
     const elPlayer = document.getElementById("player");
     if (!document.fullscreenElement) {
